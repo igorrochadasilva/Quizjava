@@ -1,0 +1,101 @@
+// ajax.js
+
+function Ajax() {
+	var xmlHttpObject = null;
+
+	try {
+		xmlHttpObject = new XMLHttpRequest();
+	} catch(e) {
+		try {
+			xmlHttpObject = new ActiveXObject("Msxml2.XMLHTTP");
+		} catch(e) {
+			xmlHttpObject = new ActiveXObject("Microsoft.XMLHTTP");
+		}
+	}
+
+	this.request = xmlHttpObject;
+}
+
+Ajax.prototype.sendRequestPost = function sendRequestPost(Url, form, endRequestFunction, errorFunction) {
+	this.request.open("POST", Url, true);
+
+	var ajaxInstance = this;
+	this.request.onreadystatechange = function() {
+		if( ajaxInstance.request.readyState == 4 ) {
+			if( ajaxInstance.request.status == 200 ) {
+				endRequestFunction( ajaxInstance.request );
+			} else {
+				errorFunction( ajaxInstance.request );
+			}
+		}
+	}
+
+	this.request.setRequestHeader("Content-Type", "application/x-www-form-Urlencoded");
+	this.request.send( getFieldsFromForm( form ) );
+}
+
+Ajax.prototype.sendRequestGet = function sendRequestGet(Url, form, endRequestFunction, errorFunction) {
+	
+	this.request.open("GET", Url + "?" + getFieldsFromForm( form ) + new Date().getTime(), true);
+
+	var ajaxInstance = this;
+	this.request.onreadystatechange = function() {
+		if( ajaxInstance.request.readyState == 4 ) {
+			if( ajaxInstance.request.status == 200 ) {
+				endRequestFunction( ajaxInstance.request );
+			} else {
+				errorFunction( ajaxInstance.request );
+			}
+		}
+	}
+
+	this.request.setRequestHeader("Content-Type", "application/x-www-form-Urlencoded");
+	this.request.send( null );
+}
+
+function getFieldsFromForm(form) {
+	var parametros = new StringBuffer();
+	if(form!=null && form.getElementsByTagName("SELECT") != null){
+		var selects = form.getElementsByTagName("SELECT");
+		if( selects != null ) {
+			for( var i = 0; i < selects.length; i++ ) {
+				if( selects[i].selectedIndex >= 0) {
+					parametros.append( selects[i].name ).append("=").append( escape( selects[i].options[selects[i].selectedIndex].value ) ).append("&");
+				}
+			}
+		}
+	}
+
+	if(form!=null && form.getElementsByTagName("INPUT") != null){
+		var inputs = form.getElementsByTagName("INPUT");
+		if( inputs != null ) {
+			for( var i = 0; i < inputs.length; i++ ) {
+				if( ( inputs[i].type == "checkbox" || inputs[i].type == "radio" ) && inputs[i].checked ) {
+					parametros.append( inputs[i].name ).append("=").append( escape( inputs[i].value ) ).append("&");
+				}
+
+				if( inputs[i].type == "text" || inputs[i].type == "hidden" ) {
+					parametros.append( inputs[i].name ).append("=").append( escape( inputs[i].value ) ).append("&");
+				}
+			}
+		}
+	}
+
+	if(form!=null && form.getElementsByTagName("TEXTAREA") != null){
+		var textareas = form.getElementsByTagName("TEXTAREA");
+		if( textareas != null ) {
+			for( var i = 0; i < textareas.length; i++ ) {
+				if( textareas[i].type == "textarea") {
+					parametros.append( textareas[i].name ).append("=").append( escape( textareas[i].value ) ).append("&");
+				}
+			}
+		}
+	}
+
+
+	return parametros.toString();
+}
+function getElementContent(element,tagName,index){
+   var childElement = element.getElementsByTagName(tagName)[index];
+   return childElement.text != undefined ? childElement.text : childElement.textContent; 
+}

@@ -1,0 +1,75 @@
+.ps-arena #ps-topo-arena .ps-container .ps-topo-left .ps-menu-left #link-solucoes .ps-menu-solucoes li a.ps-title {
+    text-transform: initial;
+    font-family: 'Open Sans';
+    font-size: 14px;
+    letter-spacing: 0;
+    line-height: 24px;
+}
+
+.ps-arena section.ps-container-fluid article.ps-blocos-icones section.ps-container div.ps-row div.ps-alignCenter {
+    width: 40px !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 8% !important;
+}
+
+.ps-wizard-icon .ps-arena section.ps-container-fluid article.ps-blocos-icones section.ps-container div.ps-row div.ps-bloco-txt {
+    padding-left: 30px !important;
+}
+
+.ps-wizard.ps-wizard-icon .ps-wizard-step .ps-sm-show {
+    margin-left: 35px !important;
+    font-size: 18px !important;
+    letter-spacing: 0 !important;
+    line-height: 28px !important;
+    opacity: 0.4 !important;
+}
+
+.ps-wizard.ps-wizard-icon .ps-wizard-step .ps-ico:before {
+    left: 18.5px !important;
+    top: 18px !important;
+}
+
+.ps-wizard .ps-wizard-step::after, .ps-wizard .ps-wizard-step::before {
+    top: 14px;
+    height: 1.5px;
+    background: #33BFFF;
+}
+
+.ps-wizard.ps-wizard-icon .ps-wizard-step .ps-ico:after {
+    width: 60px !important;
+    height: 60px !important;
+}
+
+.ps-wizard.ps-wizard-icon .ps-wizard-step .ps-sm-show {
+    padding-top: 55.5px;
+}
+
+article.wrap-carousel div.ps-carousel div.ps-carousel-container div.slick-list div.slick-track div.ps-bloco-unit article:nth-child(1) {
+    height: 133px !important;
+}
+
+.ps-arena div.ps-sm-pad--bottom section.ps-alignCenter {
+    text-align: left !important;
+    font-size: 12px !important;
+    font-family: "Open Sans" !important;
+    letter-spacing: 0 !important;
+    line-height: 22px !important;
+    background: #FFFFFF !important;
+}
+
+.ps-arena div.ps-sm-pad--bottom section.ps-alignCenter h6 span {
+    font-family: "Open Sans" !important;
+}
+
+.ps-arena div.ps-sm-pad--bottom section.ps-alignCenter h6 a {
+    font-family: "Open Sans";
+    font-size: 11px !important;
+    letter-spacing: 1.5px !important;
+    line-height: 21px !important;
+    color: #33BFFF !important;
+}
+
+.ps-sm-pad #solucoes-mobile .ps-menu-solucoes{
+    display: none;
+}

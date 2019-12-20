@@ -1,0 +1,846 @@
+
+			
+			
+			
+		function removeLeftZero(value) {
+			
+			while(value[0] == "0") {
+				value = value.substring(1)
+			}
+			
+			return value;
+		}
+		function addRightZero(value, strLength) {
+			 var adicionar = strLength - value.length;
+			 for (var i = 0; i < adicionar; i++){
+				value = '0' + value;
+			 }
+			 return value;
+		}
+		var combinations = [
+			{
+				"name" : "SUCURSAL - RAMO - APÓLICE"
+			   ,"attr" : "apolicePadrao7"
+			   ,"expression" : /^[0-9]{3}(-| |\.){1}[0-9]{3}(-| |\.){1}[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 9999-999-999999999 (Ramo-Sucursal-Apólice)</div>"
+			   ,"getTags" : function(value) {
+					valueSplitted = value.split(/[ -\.]/);
+					var ret = {
+							"codigoSucursal":  removeLeftZero(valueSplitted[0]),
+							"codigoRamo":  removeLeftZero(valueSplitted[1]),
+							"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+						  }
+					return ret;
+				}
+            },
+			{
+				"name" : "RAMO - SUCURSAL - APÓLICE"
+			   ,"attr" : "apolicePadrao6"
+			   ,"expression" : /^[0-9]{3}(-| |\.){1}[0-9]{3}(-| |\.){1}[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 9999-999-999999999 (Ramo-Sucursal-Apólice)</div>"
+			   ,"getTags" : function(value) {
+					valueSplitted = value.split(/[ -\.]/);
+					var ret = {
+							"codigoRamo":  removeLeftZero(valueSplitted[0]),
+							"codigoSucursal":  removeLeftZero(valueSplitted[1]),
+							"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+						  }
+					return ret;
+				}
+            },
+			{
+				"name" : "Apólice"
+			   ,"attr" : "apolicePadrao5"
+			   ,"expression" : /^[0-9]{4}(-| |\.){1}[0-9]{2}(-| |\.){1}[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 9999-999-999999999 (Ramo-Sucursal-Apólice)</div>"
+			   ,"getTags" : function(value) {
+					valueSplitted = value.split(/[ -\.]/);
+					var ret = {
+							"codigoRamo":  removeLeftZero(valueSplitted[0]),
+							"codigoSucursal":  removeLeftZero(valueSplitted[1]),
+							"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+						  }
+					return ret;
+				}
+            },
+			{
+				"name" : "Apólice"
+			   ,"attr" : "apolicePadrao4"
+			   ,"expression" : /^[0-9]{2}(-| |\.){1}[0-9]{4}(-| |\.){1}[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 9999-999-999999999 (Ramo-Sucursal-Apólice)</div>"
+			   ,"getTags" : function(value) {
+					valueSplitted = value.split(/[ -\.]/);
+					var ret = {
+							"codigoSucursal":  removeLeftZero(valueSplitted[0]),
+							"codigoRamo":  removeLeftZero(valueSplitted[1]),
+							"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+						  }
+					return ret;
+				}
+            },
+			{
+				"name" : "Apólice"
+			   ,"attr" : "apolicePadrao3"
+			   ,"expression" : /^[0-9]{3}(-| |\.){1}[0-9]{4}(-| |\.){1}[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 9999-999-999999999 (Ramo-Sucursal-Apólice)</div>"
+			   ,"getTags" : function(value) {
+					valueSplitted = value.split(/[ -\.]/);
+					var ret = {
+							"codigoSucursal":  removeLeftZero(valueSplitted[0]),
+							"codigoRamo":  removeLeftZero(valueSplitted[1]),
+							"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+						  }
+					return ret;
+				}
+            },
+			{
+				"name" : "Apólice"
+			   ,"attr" : "apolicePadrao2"
+			   ,"expression" : /^[0-9]{4}(-| |\.){1}[0-9]{3}(-| |\.){1}[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 9999-999-999999999 (Ramo-Sucursal-Apólice)</div>"
+			   ,"getTags" : function(value) {
+					valueSplitted = value.split(/[ -\.]/);
+					var ret = {
+							"codigoRamo":  removeLeftZero(valueSplitted[0]),
+							"codigoSucursal":  removeLeftZero(valueSplitted[1]),
+							"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+						  }
+					return ret;
+				}
+            },
+			{
+				"name" : "Apólice"
+			   ,"attr" : "apolicePadrao1"
+			   ,"expression" : /^[0-9]{3}(-| |\.){1}[0-9]{2}(-| |\.){1}[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 999-9999-999999999 (Ramo-Sucursal-Apólice)</div>"
+			   ,"getTags" : function(value) {
+					valueSplitted = value.split(/[ -\.]/);
+					var ret = {
+							"codigoRamo":  removeLeftZero(valueSplitted[0]),
+							"codigoSucursal":  removeLeftZero(valueSplitted[1]),
+							"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+						  }
+					return ret;
+				}
+            },
+			{
+				"name" : "Apólice"
+			   ,"attr" : "apolicePadrao"
+			   ,"expression" : /^[0-9]{2}(-| |\.){1}[0-9]{3}(-| |\.){1}[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 9999-999-999999999 (Ramo-Sucursal-Apólice)</div>"
+			   ,"getTags" : function(value) {
+					valueSplitted = value.split(/[ -\.]/);
+					var ret = {
+							"codigoSucursal":  removeLeftZero(valueSplitted[0]),
+							"codigoRamo":  removeLeftZero(valueSplitted[1]),
+							"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+						  }
+					return ret;
+				}
+            },
+			 {
+				"name" : "Contrato"
+			   ,"attr" : "contratoSAP"
+			   ,"expression" : /^[0-9]{1,9}(-| |\.)[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Contrato</b></div><div class='ps-sm-mod9'> 999999999-999999999</div>"
+			   ,"getTags" : function(value) {
+					valueSplitted = value.split(/[ -\.]/);
+					var ret = {
+							"cod1":  removeLeftZero(valueSplitted[0]),
+							"cod2": removeLeftZero(valueSplitted[1])
+						  }
+					return ret;
+				}
+             },
+			 {
+                    "name" : "Apólice com Endosso"
+				   ,"attr" : "apolicePortoRamoEndosso"
+                   ,"expression" : /^[0-9]{1,3}(-| |\.)[0-9]{1,4}(-| |\.)[0-9]{1,9}(-| |\.)[0-9]{1,8}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice com endosso</b></div><div class='ps-sm-mod9'> 999-9999-999999999-99999999 (Sucursal-Ramo-Apólice-Endosso)</div>"
+                   ,"getTags" : function(value) {
+						valueSplitted = value.split(/[ -\.]/);
+						var ret = {
+								"codigoSucursal":  removeLeftZero(valueSplitted[0]),
+								"numeroRamo": removeLeftZero(valueSplitted[1]),
+								"numeroDigitoApolice":  removeLeftZero(valueSplitted[2]),
+								"numeroDigitoEndosso":  valueSplitted[3]
+							  }
+                        return ret;
+                    }
+            },
+			{
+                    "name" : "Apólice sem endosso"
+				   ,"attr" : "apolicePortoRamo"
+                   ,"expression" : /^[0-9]{1,2}(-| |\.)[0-9]{1,4}(-| |\.)[0-9]{1,9}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 9999-999-999999999 (Ramo-Sucursal-Apólice)</div>"
+                   ,"getTags" : function(value) {
+						valueSplitted = value.split(/[ -\.]/);
+						var ret = {
+								"codigoSucursal":  removeLeftZero(valueSplitted[0]),
+								"numeroRamo": removeLeftZero(valueSplitted[1]),
+								"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+							  }
+                        return ret;
+                    }
+            },		
+			 {
+                    "name" : "Apólice Porto "
+				   ,"attr" : "apolicePorto"
+                   ,"expression" : /^[0-9]{1,4}(\-| |\.)[0-9]{1,14}(\-| |\.)[0-9]{1,4}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 9999-9999999999999-9999 (Sucursal-Apólice-Item)</div>"
+                   ,"getTags" : function(value) {
+						valueSplitted = value.split(/[ -\.]/);
+						var ret = {
+								"codigoSucursal":  removeLeftZero(valueSplitted[0]),
+								"numeroDigitoApolice":  removeLeftZero(valueSplitted[1]),
+								"numeroDigitoItem":  removeLeftZero(valueSplitted[2])
+							  }
+                        return ret;
+                    }
+            },	
+			 {
+                    "name" : "Apólice Azul"
+				   ,"attr" : "apoliceAzul"
+                   ,"expression" : /^[0-9]{1,2}(-| ){1}[0-9]{1,2}(-| ){1}[0-9]{1,4}(-| ){1}[0-9]{1,6}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 99-99-9999-999999 (Sucursal-Exercício(Ano)-Ramo-Apólice)</div>" 
+                   ,"getTags" : function(value) {
+						value = value.replace(/-| /g,"");
+						var ret = {
+								"numeroApoliceAzul":  value
+							  }
+                        return ret;
+                    }
+            },	
+			{
+                    "name" : "Sinistro Azul"
+				   ,"attr" : "numeroAviso" 
+                   ,"expression" : /^[0-9]{1,4}(-| ){1}[0-9]{1,6}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Aviso</b></div><div class='ps-sm-mod9'> 9999-999999 (Ano do Sinistro - Número do Aviso)</div>" 
+                   ,"getTags" : function(value) {
+						valueSplitted = value.split(/[ -\.]/);
+						var ret = {
+								"anoSinistro":  valueSplitted[0],
+								"numeroAviso":  valueSplitted[1]
+								}
+						return ret;
+                    }
+            },
+			
+			{
+                    "name" : "Sinistro Porto"
+				   ,"attr" : "numeroSinistroPorto"
+                   ,"expression" : /^[0-9]{1,4}(-| |\.){1}[0-9]{1,4}(-| |\.){1}[0-9]{1,6}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Sinistro</b></div><div class='ps-sm-mod9'> 9999-9999-999999 (Ramo-Ano-Número do Sinistro)</div>"
+                   ,"getTags" : function(value) {
+						valueSplitted = value.split(/[ -\.]/);
+						var ret = {
+								"codigoRamo":  valueSplitted[0],
+								"anoSinistro":  valueSplitted[1],
+								"numeroSinistro":  valueSplitted[2]
+							  }
+                        return ret;
+                    }
+            },
+			 {
+                    "name" : "Apólice"
+				   ,"attr" : "apolice"
+                   ,"expression" : /^[0-9]{1,3}(-| |\.){1}[0-9]{1,4}(-| |\.){1}[0-9]{1,9}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 999-9999-999999999 (Sucursal-Ramo-Apólice)</div>"
+                   ,"getTags" : function(value) {
+						valueSplitted = value.split(/[ -\.]/);
+						var ret = {
+								"codigoSucursal":  removeLeftZero(valueSplitted[0]),
+								"codigoRamo":  removeLeftZero(valueSplitted[1]),
+								"numeroDigitoApolice":  removeLeftZero(valueSplitted[2])
+							  }
+                        return ret;
+                    }
+            },
+			{
+                    "name" : "Apólice"
+				   ,"attr" : "apoliceComZeroEsquerda"
+                   ,"expression" : /^[0-9]{1,2}(-| |\.){1}[0-9]{1,4}(-| |\.){1}[0-9]{1,9}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Apólice</b></div><div class='ps-sm-mod9'> 99-9999-999999999 (Sucursal-Ramo-Apólice)</div>"
+                   ,"getTags" : function(value) {
+						valueSplitted = value.split(/[ -\.]/);
+						var ret = {
+								"codigoSucursal": addRightZero(valueSplitted[0], 2),
+								"codigoRamo":  addRightZero(valueSplitted[1], 4),
+								"numeroDigitoApolice":  addRightZero(valueSplitted[2], 9)
+							  }
+                        return ret;
+                    }
+            },
+			{
+                    "name" : "Item Apólice"
+				    ,"attr" : "itemapolice"
+                   ,"expression" : /^[0-9]{1,3}(-| ){1}[0-9]{1,4}(-| ){1}[0-9]{1,9}(-| ){1}[0-9]{1,7}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Item Apólice</b></div><div class='ps-sm-mod9'> 999-9999-999999999-99  (Sucursal-Ramo-Apólice-Item)</div>"
+                   ,"getTags" : function(value) {
+						valueSplitted = value.split(/[ -]/);
+						var ret = {
+								"codigoSucursal":  	removeLeftZero(valueSplitted[0]),
+								"codigoRamo": 		 removeLeftZero(valueSplitted[1]),
+								"numeroDigitoApolice": removeLeftZero(valueSplitted[2]),
+								"numeroDigitoItem":  removeLeftZero(valueSplitted[3])
+								}
+                        return ret;
+                    }
+            },
+			{
+                    "name" : "Proposta"
+					,"attr" : "proposta"
+                   ,"expression" : /^[0-9]{1,2}(-| ){1}[0-9]{1,8}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Proposta</b></div><div class='ps-sm-mod9'> 99-99999999 (Origem-Número)</div>"
+                   ,"getTags" : function(value) {
+						valueSplitted = value.split(/[ -]/);
+						var ret = {
+								"codigoOrigemProposta":  	valueSplitted[0],
+								"numeroDigitoProposta":     valueSplitted[1]
+							}
+                        return ret;
+                    }
+            },
+			{
+                    "name" : "propostaAzul"
+					,"attr" : "propostaAzul"
+                   ,"expression" : /[\w\s,.]*\d+[\w\s,.]*/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Proposta Azul</b></div><div class='ps-sm-mod9'> Q34YXK2567 (Origem-Alphanumerico)</div>"
+                   ,"getTags" : function(value) {
+						var ret = {
+								"codigoOrigemPropostaAzul":  	value
+							}
+                        return ret;
+                    }
+            },			
+			{
+                    "name" : "Chassi"
+					,"attr" : "chassi"
+                   ,"expression" : /^[0-9a-zA-Z]{17,20}$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>Chassi</b></div><div class='ps-sm-mod9'> ZZZZZZZZZZZZZZZZ</div>"
+                   ,"getTags" : function(value) {
+						var ret = {
+								"numeroChassi":  	value
+							}
+                        return ret;
+					}
+             },
+			{
+				"name" : "Placa"
+				,"attr" : "placa"
+			   ,"expression" : /^[A-Za-z]{3}(-| )?[0-9]{4}$|^[A-Za-z0-9]{7}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Placa</b></div><div class='ps-sm-mod9'> ABC-1234 ou ABC1234 ou A1B2C3D</div>"
+			   ,"priorityOnTie": false
+			   ,"getTags" : function(value) {
+					value = value.replace(/-| /g,"");
+					var ret = {
+								"placa": value.toUpperCase()
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "Nome"
+				,"attr" : "nome"
+			   //,"expression" : / *[A-Za-z0-9]+ */
+			   // ,"expression" : /(^[a-zA-Z0-9 ]+$)/
+			   // ,"expression" : /(^[a-zA-Z ]+$)/
+			   ,"expression" : /^(?=.*[a-zA-Z])(?=.*[0-9]*)/
+			   // ,"expression" : /(^\w+$)/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Nome</b></div><div class='ps-sm-mod9'> João da Silva</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+								"nome": value.toUpperCase()
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "Código"
+				,"attr" : "code"
+			   //,"expression" : / *[A-Za-z0-9]+ */
+			   // ,"expression" : /(^[a-zA-Z0-9 ]+$)/
+			   // ,"expression" : /(^[a-zA-Z ]+$)/
+			   ,"expression" : /^[0-9]*/
+			   // ,"expression" : /(^\w+$)/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Código</b></div><div class='ps-sm-mod9'> 12345</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+								"nome": value.toUpperCase(),
+								"searched_by_code":'true'
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "Nome (Pessoa Física)"
+				,"attr" : "nomefisica"
+			    ,"expression" : /^(?=.*[a-zA-Z])(?=.*[0-9]*)/
+			    ,"instruction" : "<div class='ps-sm-mod3'><b>Nome</b></div><div class='ps-sm-mod9'> João da Silva</div>"
+			    ,"getTags" : function(value) {
+					var ret = {
+								"nome": value.toUpperCase(),
+								"tipoPessoa":'F'
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "Nome (Pessoa Jurídica)"
+				,"attr" : "nomejuridica"
+			    ,"expression" : /^(?=.*[a-zA-Z])(?=.*[0-9]*)/
+			    ,"instruction" : "<div class='ps-sm-mod3'><b>Nome Jurídico</b></div><div class='ps-sm-mod9'> Planet Group Ltda.</div>"
+			    ,"getTags" : function(value) {
+					var ret = {
+								"nome": value.toUpperCase(),
+								"tipoPessoa":'J'
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "Nome2"
+				,"attr" : "nome2"
+			   ,"expression" : /^(?=.*[a-zA-Z])(?=.*[0-9]*)/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Nome</b></div><div class='ps-sm-mod9'> João da Silva</div>"
+			   ,"validate" : function(value){
+								if(value.length >= 5) return true;
+								else return false;
+							}
+			   ,"validateMsg": "O nome deve ter 5 ou mais caracteres"
+			   ,"getTags" : function(value) {
+					var ret = {
+								"nome": value.toUpperCase()
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "CPF"
+				,"attr" : "cpf"
+			   ,"expression" :/^[0-9]{2,3}\.{0,1}[0-9]{3}\.{0,1}[0-9]{3}(-| ){0,1}[0-9]{2}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>CPF</b></div><div class='ps-sm-mod9'> 999.999.999-99 ou 99999999999</div>"
+			   ,"getTags" : function(value) {
+					value = value.replace(/(-| |\.)/g,"");
+					if (value.length === 10){
+                        value = "0" + value;
+                    }
+					var ret = {
+								"numeroCpf": value.substring(0,9),
+								"numeroDigitoCpf": value.substring(9,11),
+								"tipoPessoa":'F'
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "CNPJ"
+				,"attr" : "cnpj"
+			   ,"expression" : /^([0-9]{1,2}\.{0,1}[0-9]{3}\.{0,1}[0-9]{3}( |-|\/){1}[0-9]{1,4}( |-){1}[0-9]{2}|[0-9]{13,14})$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>CNPJ</b></div><div class='ps-sm-mod9'> 99.999.999/9999-99 ou 99999999999999</div>"
+			   ,"getTags" : function(value) {
+                    value = value.replace(/\./g,"");
+					if (Boolean(value.match(/( |-|\/)/))){
+							var tokens = value.split(/-| |\//);
+							value = (tokens[0].length === 7 ? "0" + tokens[0] : tokens[0] ) // número cnpj (tamanho 8) preenchido com 0 se necessário
+								  + (tokens[1].length !== 4 ? ("0000" + tokens[1]).slice(-4) : tokens[1]) // ordem cnpj (tamanho 4) preenchido com 0's se necessário
+								  + tokens[2]; // dígito cnpj (tamanho 2)
+						} 
+						//caso seja a regex de 13/14 números sem símbolos [0-9]{13,14}
+						else if (value.length === 13){
+							value = "0" + value;
+						}
+						
+					var ret = {
+								"numeroCpfCnpj": value.substring(0,8),
+								"numeroOrdemCnpj": value.substring(8,12),
+								"numeroDigitoCpfCnpj": value.substring(12,14),
+								"tipoPessoa":'J'
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "Cobertura Provisória"
+				,"attr" : "coberturaprovisoria"
+			   ,"expression" : /^[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Cobertura Provisória</b></div><div class='ps-sm-mod9'> 999999999</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+								"coberturaProvisoria": value.toUpperCase()
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "Nota fiscal"
+				,"attr" : "notafiscal"
+			   ,"expression" : /^[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Nota fiscal</b></div><div class='ps-sm-mod9'> 999999999</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+								"notaFiscal": value.toUpperCase()
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "Número de Vistoria Prévia ou Agendamento"
+				,"attr" : "numerovistoriaagendamento"
+			   ,"expression" : /^[0-9]{1,9}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Número de Vistoria Prévia ou Agendamento</b></div><div class='ps-sm-mod9'> 999999999</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+								"numerovistoriaAgendamento": value.toUpperCase()
+							  }
+					return ret;
+				}
+			},
+			
+			{
+                    "name" : "CEP"
+					,"attr" : "cep"
+                   ,"expression" : /^([0-9]{4,5}( |-){0,1}[0-9]{3}|[0-9]{5})$/
+				   ,"instruction" : "<div class='ps-sm-mod3'><b>CEP</b></div><div class='ps-sm-mod9'> 99999-999</div>"
+                   ,"getTags" : function(value) {
+						value = value.replace(/(-| )/g,"");
+						if (value.length === 7){
+							value = "0" + value;
+						} else if (value.length === 5) {
+							value += "000";
+						}
+						var ret = {
+								"numeroInicioCep": value.substring(0,5),
+								"numeroComplementoCep": value.substring(5,8)
+								}
+						return ret;
+                    }
+            },				
+			{
+				"name" : "Susep"
+				,"attr" : "susep"
+			   ,"expression" : /^[0-9a-zA-Z]{5,5}[a-zA-Z]{1,1}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Susep</b></div><div class='ps-sm-mod9'> X9999X</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+								"codigoSusep": value.toUpperCase()
+							  }
+					return ret;
+				}
+			},
+			{
+				"name" : "Título"
+				,"attr" : "titulo"
+			   ,"expression" : /^[0-9]{1,10}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Título</b></div><div class='ps-sm-mod9'> 9999999999</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+								"titulo": value.toUpperCase()
+							  }
+					return ret;
+				}
+			},
+         
+         {
+				"name" : "Produto"
+				,"attr" : "produto"
+			   ,"expression" : /^(?=.*[a-zA-Z])(?=.*[0-9]*)/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Produto</b></div><div class='ps-sm-mod9'> Automóvel</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+						"produto": value
+					}
+					return ret;
+				}
+			},
+			{
+				"name" : "Código Portabilidade"
+				,"attr" : "codigo_portabilidade"
+			   ,"expression" : /^[0-9]{1,10}$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Código</b></div><div class='ps-sm-mod9'> 1231231231</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+						"codigo_portabilidade": value
+					}
+					return ret;
+				}
+			},
+			{
+				"name" : "Número"
+				,"attr" : "number"
+			   ,"expression" : /^[0-9]+$/
+			   ,"instruction" : "<div class='ps-sm-mod3'><b>Número</b></div><div class='ps-sm-mod9'>1231231231</div>"
+			   ,"getTags" : function(value) {
+					var ret = {
+						"number": value
+					}
+					return ret;
+				}
+			}
+		];
+		
+		/**
+			* Função que executa as expressões regulares sobre o valor a ser pesquisado
+			*
+			* - caso mais de 1 combination se encaixe: mostra modal com os possíveis tipos de pesquisa 
+			*	que podem ser executados e força o usuário escolher 1 deles.
+			*	
+			* -	caso 1 combination se encaixe: realiza a pesquisa com o valor a ser pesquisado.
+			*
+			* -	caso nenhuma combination se encaixe: não faz nada e mostra que não soube pesquisar.
+			*/
+            function interpretar(id, required, callback) {
+				var div = id+"_smartSearch";
+				
+				if($(id).is("[hidedbyshowrule]")){
+					return false;
+				}
+				// array que vai conter as combinações possíveis
+                var combinationsMatched = new Array();
+				
+				// obtém o valor da caixa de pesquisa
+				var textoPesquisa = removeAcento($(id).val().toUpperCase());
+				textoPesquisa = $.trim(textoPesquisa);
+				
+				// varre as combinations e testa a regex **/
+                for (var cont = 0; cont < combinations.length; cont++) {
+				
+						
+					var att = "data-searchtype_" + combinations[cont].attr.toLowerCase();
+					
+					if(($(id).is("[" + att + "]")) || ($(id).is("[data-searchtype_all]"))){
+						if (combinations[cont].expression.test(textoPesquisa)) {
+							var nameAtt = combinations[cont].attr.toLowerCase();
+							if($(id).is("["+nameAtt+"_minlength]")) {
+								if(textoPesquisa.length >= parseInt($(id).attr(nameAtt+"_minlength"))) {
+									combinationsMatched.push(combinations[cont]);
+								}
+							} else {
+								combinationsMatched.push(combinations[cont]);
+							}
+						}	
+					}
+                }
+				
+				var dialogOpen = false;
+				
+				// se houve mais de 1 combinação, mostrar dialog com as opções **/				
+                if (combinationsMatched.length > 1) {
+					
+					var priorityOnTie ="";
+					//Testa se alguma tem prioridade no Empate, se só uma já utiliza ela
+					for (var comb = 0; comb < combinationsMatched.length; comb++) {
+						if(combinationsMatched[comb].priorityOnTie){
+							if(priorityOnTie == ""){
+								priorityOnTie = combinationsMatched[comb];
+							}else{
+								priorityOnTie = "";
+								break;
+							}	
+						}
+					}
+					if(priorityOnTie){
+						if(validateSearch(priorityOnTie, textoPesquisa)){
+							carregaPesquisa(priorityOnTie.name, priorityOnTie.getTags(textoPesquisa), textoPesquisa, div);
+							
+							
+							if (callback) {
+								callback(true);
+							}
+						}else{
+							$(div).html("<h5>"+priorityOnTie.validateMsg+"</h5>");
+						}
+					}else{
+						//some com a resposta atual
+						$(div).html("");
+						
+						//mostra modal com as combinações possíveis
+						var suggestModal = makeSuggestFromCombinations(combinationsMatched, textoPesquisa);
+						psLib.ModalShowHide("#sugest_modal", false, true, null, null);
+						
+						$("body").on("click","#sugest_modal a",function(){
+							
+							if(validateSearch($(this).parent().data().combination, textoPesquisa)){ //Chama validação extra de Campo
+								carregaPesquisa($(this).text(), $(this).parent().data().combination.getTags(textoPesquisa), textoPesquisa, div);
+								
+								// fecha suggestModal
+								psLib.ModalShowHide("#sugest_modal", false, true, null, null);
+								
+								if (callback) {
+									callback(true);
+								}
+							}else{
+								$(div).html($(this).data().combination.validateMsg);
+								psLib.ModalShowHide("#sugest_modal", false, true, null, null);
+							}
+							
+							// dar return false se não ele vai para o link
+							return false;	
+						});
+						
+						return false;
+					}
+				} 
+				
+				// se apenas 1 combinação, faz a pesquisa **/
+				else if (combinationsMatched.length == 1)  {
+					
+					if(validateSearch(combinationsMatched[0], textoPesquisa)){
+						carregaPesquisa(combinationsMatched[0].name, combinationsMatched[0].getTags(textoPesquisa), textoPesquisa, div);
+						
+						
+						if (callback) {
+							callback(true);
+						}
+					}else{
+						$(div).html("<h5>"+combinationsMatched[0].validateMsg+"</h5>");
+					}
+                } 
+				// se não encaixou nada **/
+				else {
+					if(textoPesquisa == ""){
+						if (callback) {
+							callback(true);
+						}
+					}else{
+						$(div).html("<h5>Dados inválidos para consulta</h5>");
+						
+						openInfoDialog(id);
+					}
+					
+                }
+				//volta o foco ao campo de pesquisa com o texto selecionado
+				$(id).select();
+            }
+			
+			
+			function validateSearch(combination, textoPesquisa){
+			
+				if(combination.validate){
+					if(combination.validate(textoPesquisa)) return true;
+					else return false;
+				}else{
+					return true;
+				}
+			}
+			
+			function removeAcento(strToReplace) {
+				str_acento= "áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÖÔÚÙÛÜÇ";
+				str_sem_acento = "aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC";
+				var nova="";
+					for (var i = 0; i < strToReplace.length; i++) {
+						if (str_acento.indexOf(strToReplace.charAt(i)) != -1) {
+							nova+=str_sem_acento.substr(str_acento.search(strToReplace.substr(i,1)),1);
+						} 
+						else {
+							nova+=strToReplace.substr(i,1);
+						}
+					}
+				return nova;
+			}
+			
+			function carregaPesquisa (tipoPesquisa, tags, textoPesquisa, div){
+				// atualiza texto com o tipo de pesquisa realizado
+				$(div).html("Realizando busca por " + tipoPesquisa);
+				
+				for(var x in tags){
+				
+				$("<input type='hidden' name='"+x+"' value='"+tags[x]+"' />").appendTo(div);
+				
+				}
+			}
+			
+			function openInfoDialog(id){
+				
+				var modal = $("<div class='ps-modal' id='smartsearch_modal'></div>");
+				// $('<div class="loadingModalHolder"><span class="ps-ico-loading-modal ps-ico-loading ps-ico-loading-white ps-ico-lg"></span><div class="ps-loading-text">Carregando<br/> Pressione ESC para cancelar.</div></div><a href="javascript:;"   class="ps-giw-modal-close ps-modal-close-default"><span class="ps-ico ps-ico-sm ps-sm-ico-lg ps-ico-close"></span></a>').appendTo(modal);
+				$('<a href="javascript:;"   class="ps-giw-modal-close ps-modal-close-default"><span class="ps-ico ps-ico-sm ps-sm-ico-lg ps-ico-close"></span></a>').appendTo(modal);
+				var holder = $("<div class='ps-modal-container ps-sm-modal-large'></div>");
+				var title = $("<div class='ps-modal-title'>Instruções</div>");
+				var content = $("<div class='ps-modal-content'></div>");
+				
+				$(title).appendTo(holder);
+				
+				var row = $("<div class='ps-row ps-frm-row'></div>");
+				
+				var txt = $("<div class='ps-sm-mod12'><span class='ps-heading-4 ps-light'>Utilize os padrões abaixo:</span></div>");
+				
+				$(txt).appendTo(row);
+				
+				$(row).appendTo(content);
+				
+				var firstLine = true;
+				
+				for (var cont = 0; cont < combinations.length; cont++) {
+				
+					var att = "data-searchtype_" + combinations[cont].attr.toLowerCase();
+					
+					if(($(id).is("[" + att + "]")) || ($(id).is("[data-searchtype_all]"))){
+						var inst= combinations[cont].instruction;
+						
+						var nameAtt = combinations[cont].attr.toLowerCase();
+						var row = $("<div style='margin-bottom:10px;' class='ps-row'></div>");
+		
+						if($(id).is("["+nameAtt+"_minlength]")) {
+							$("<div class='ps-sm-mod12'>" + inst + " (Tamanho Mínimo: "+$(id).attr(nameAtt+"_minlength")+"):</div>").appendTo(row);
+						} else {
+							$("<div class='ps-sm-mod12'>" + inst + "</div>").appendTo(row);
+						}
+						
+						if(!nameAtt.startsWith('apolicepadrao') || nameAtt == 'apolicepadrao'){
+							$(row).appendTo(content);
+							firstLine = false;
+						}
+						
+					}
+				}
+				
+				$(content).appendTo(holder);
+				$(holder).appendTo(modal);
+				$(modal).appendTo($("body"));
+				psLib.ModalShowHide("#smartsearch_modal", false, true, null, null)
+				
+			}
+		
+			function makeSuggestFromCombinations(combinationsMatched, textoPesquisa){
+				
+				var modal = $("<div class='ps-modal' id='sugest_modal'></div>");
+				$('<a href="javascript:;"   class="ps-giw-modal-close ps-modal-close-default"><span class="ps-ico ps-ico-sm ps-sm-ico-lg ps-ico-close"></span></a>').appendTo(modal);
+				var holder = $("<div class='ps-modal-container ps-sm-modal-medium'></div>");
+				var title = $("<div class='ps-modal-title'>Escolha o tipo de pesquisa</div>");
+				var content = $("<div class='ps-modal-content'></div>");
+				
+				$(title).appendTo(holder);
+				
+				for (var i = 0; i < combinationsMatched.length; i++) {
+					var row = $("<div style='margin-bottom:10px;' class='ps-row'></div>");
+					
+					var ln = $("<div class='ps-sm-mod12'></div>");
+					
+					var a = $("<b><a href='#'>" + combinationsMatched[i].name + "</a></b>");
+					$(a).data("combination", $.extend(true, {"textoPesquisa": textoPesquisa }, combinationsMatched[i]));
+					
+					$(a).appendTo(ln);
+					$(ln).appendTo(row);
+					$(row).appendTo(content);
+				}
+				
+				$(content).appendTo(holder);
+				$(holder).appendTo(modal);
+				$(modal).appendTo($("body"));
+				
+				return modal;
+			}
+			
+			
+		$(function() {
+			
+			
+			$(".btnSmartInfo").click(function(){
+				var id = "#" + $(this).closest(".giw-smartSearch").find(".smart-search").attr("id");
+				openInfoDialog(id);
+				return false;
+			});
+		});
+		
+	

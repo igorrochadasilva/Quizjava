@@ -1,0 +1,149 @@
+vuit.provide('VignettePortal.AJAXClient');
+
+VignettePortal.AJAXClient = function() {
+};
+
+VignettePortal.AJAXClient.prototype = {
+	_getHandlerType: function(data, props) {
+		// summary: private method to return one of "load", "error", "timeout" to describe the response
+		var type = "load";
+		if (typeof props.vuitType != "undefined") {
+			type = vuitType.toString();
+		}
+		return type;
+	},
+	// sends the data to the URL in AJAX style and invokes the callback method
+	sendURL: function(url, callbackMethod) {
+		var requestArgs = {
+			url: url,
+			content: {
+				isAjaxRequest: "true",
+			},
+			load: vuit.hitch(this, function(data, ioArgs) {
+				this.processResponse("load", data, ioArgs.xhr, callbackMethod);
+
+			}),
+			error: vuit.hitch(this, function(data, err) {
+				var type = this._getHandlerType(data, ioArgs);
+				this.processResponse(type, data, ioArgs.xhr, callbackMethod);
+			})
+			,sync:true
+		};
+		vuit.xhrGet(requestArgs);
+		return false;
+	},
+
+
+	// sends the form data to the Action URL of the Form in AJAX style and
+	//invokes the callback method
+	sendForm: function(formNodeValue, callbackMethod) {
+		// get the method in Propercase
+		var xhrMethod = (typeof formNodeValue.method != "undefined") ? formNodeValue.method.toLowerCase() : "get";
+		xhrMethod = "xhr" + xhrMethod.charAt(0).toUpperCase() + xhrMethod.substring(1);
+		// call the appropriate vuit method (e.g. vuit.xhrGet)
+		var requestArgs = {
+			form: formNodeValue,
+			load: vuit.hitch(this, function(data, ioArgs) {
+				this.processResponse("load", data, ioArgs.xhr, callbackMethod);
+
+			}),
+			error: vuit.hitch(this, function(data, err) {
+				var type = this._getHandlerType(data, ioArgs);
+				this.processResponse(type, data, ioArgs.xhr, callbackMethod);
+			})
+		};
+		vuit.xhrPost(requestArgs);
+		return false;
+	},
+
+	// posts the multipart form data to the Action URL of the Form in AJAX style and
+	//invokes the callback method
+
+	sendMultiPartForm: function(formNodeValue, callbackMethod, responseMimeType) {
+		if (responseMimeType === null) {
+			responseMimeType = "text/plain";
+		}
+
+		var url = formNodeValue.action;
+		if (url.indexOf("#") > -1) {
+			url = url.split("#")[0];
+		}
+		vuit.io.iframe.send({
+			url: url,
+			method: "POST",
+			form: formNodeValue,
+			handleAs: "html",
+			//timeoutSeconds: 10,
+			preventCache: true,
+			load: vuit.hitch(this, function(data, ioArgs) {
+				if (typeof data.nodeType !== "undefined" && data.nodeType === 9) {
+					var bodyElm = "";
+					if (data.body.innerHTML) {
+						bodyElm = data.body.innerHTML;
+					} else if (data.getElementsByTagName("body")[0].innerHTML) {
+						bodyElm = data.getElementsByTagName("body")[0].innerHTML;
+					}
+					//bodyElm = data.body || data.getElementsByTagName("body")[0];
+					data = bodyElm;
+				}
+				this.processMultiPartResponse("load", data, ioArgs, callbackMethod);
+			}),
+			error: vuit.hitch(this, function(data, err) {
+
+				var type = this._getHandlerType(data, err);
+				this.processMultiPartResponse(type, data, err, callbackMethod);
+			})
+		});
+		return false;
+	},
+
+	// handles AJAX response by doing some preliminary error handling
+	processResponse: function (type, data, evt, callback) {
+		var isValidResponse = evt.getResponseHeader("X-Vignette-RespondedWith");
+		if (isValidResponse != "AJAX") {
+			// If the response is not valid (i.e., timeout, error), display it in the cuurent window
+			// FIXME: this leaks!
+			window.document.body.innerHTML = evt.responseText;
+			return;
+		}
+		else {
+			callback(evt);
+		}
+	},
+
+	// handles Multipart response
+	processMultiPartResponse: function (type, data, evt, callback) {
+		callback(data);
+	},
+
+	SCRIPT1: new RegExp(/(<script[^>]*?(type='text\/javascript'|type="text\/javascript"|type=text\/javascript|language="javascript")[^>]*?>)([\s\S]*?)<\/script>/gi),
+	SCRIPT2: new RegExp(/<script[^>]*?src=\"([^"]*?)\"[^>]*?>/gi),
+
+	// finds javascript in a text fragment and adds to the document
+	addScripts: function (frag) {
+		var r1, r2;
+		while ((r1 = this.SCRIPT1.exec(frag)) !== null) {
+			if ((r2 = this.SCRIPT2.exec(r1[1])) !== null) {
+				this.evalInGlobalSrc(r2[1]);
+			} else {
+				this.evalInGlobal(r1[3]);
+			}
+		}
+	},
+
+	evalInGlobal: function(code) {
+		var appendNode = document.body;
+		var n = appendNode.ownerDocument.createElement('script');
+		n.type = "text/javascript";
+		appendNode.appendChild(n);
+		n.text = code;
+	},
+
+	evalInGlobalSrc: function(src, type) {
+		var appendNode = document.body;
+		var n = appendNode.ownerDocument.createElement('script');
+		n.type = type || "text/javascript";
+		appendNode.appendChild(n);
+		n.src = src;
+	}
+};

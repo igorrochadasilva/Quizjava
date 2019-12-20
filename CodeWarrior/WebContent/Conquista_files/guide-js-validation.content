@@ -1,0 +1,670 @@
+
+				
+			
+				function placaValidator(placa) {
+					placa = placa.replace("-","");
+					if(placa.length >= 8 && !/[a-z|A-Z]/gm.test(placa)) return false;
+					var patt = new RegExp("[a-z|A-Z]{3,3}[0-9]{4,4}");
+					var patt2 = new RegExp("^[a-zA-Z0-9]{7}$");
+					return patt.test(placa) || patt2.test(placa);
+				};
+					
+				function chassiValidator(chassi) {
+					var patt = new RegExp("^[a-zA-Z0-9]{17}$");
+					return patt.test(chassi);
+				};
+				
+				function placaController(field, fromChange) {
+					if(field.val() != '') {
+						if(placaValidator(field.val())) {
+							try {
+								psLib.FormShowFieldError(field,true);
+							} catch (e) {}
+						} else {
+							try {
+								psLib.FormShowFieldError(field,false);
+							} catch (e) {}
+						}
+					} else {
+						if(!field.is("[required]")) {
+							try {
+								psLib.FormShowFieldError(field,true);
+							} catch (e) {}
+						} else if (fromChange) {
+							try {
+								psLib.FormShowFieldError(field,false);
+							} catch (e) {}
+						}
+					} 
+				}
+				
+				function chassiController(field, fromChange) {
+					if(field.val() != '') {
+						if(chassiValidator(field.val())) {
+							try {
+								psLib.FormShowFieldError(field,true);
+							} catch (e) {}
+						} else {
+							try {
+								psLib.FormShowFieldError(field,false);
+							} catch (e) {}
+						}
+					} else {
+						if(field.is("[required]")) {
+							try {
+								psLib.FormShowFieldError(field,true);
+							} catch (e) {}
+						} else if (fromChange) {
+							try {
+								psLib.FormShowFieldError(field,false);
+							} catch (e) {}
+						}
+					}
+				}
+				
+				//Remove Acento
+				$(function(){
+			   	$("input").each(function (){
+			      	if($(this).attr("data-removeacento")!= undefined){
+		         	   $(this).keyup(function(){
+								$(this).val(removeAcento($(this).val()));
+		         	   });
+		         	}
+		         });
+				});
+				
+				//Remover caracteres especiais de input
+				$(function(){
+			   	$("input").each(function (){
+			      	if($(this).attr("data-removespecialchar")!= undefined){
+		         	   if($(this).attr("data-validatespecialcharchange")!= undefined){
+			      	      $(this).change(function(){
+			      	      	$(this).val(removeSpecialChar($(this).val()));
+			      	      })
+			      	   } else {
+		         	      $(this).keyup(function(){
+		         	   		$(this).val(removeSpecialChar($(this).val()));
+		         	      });
+		         	   }
+			      	}
+		         });
+				});
+				
+				//Remove caracteres especiais e acentuacao
+		      function removeSpecialChar(str) {
+			      
+               // Remove qualquer caractere em branco do final do texto:
+               str = str.replace(/[`~!'&;@#&;ªº°¹²³£¢¬$¨%^&*()_{´|+\-=?;:",.<>\{\}\[\]\\\/]/gi, '');
+               
+               return str;
+				};
+
+				//Somente letras
+				function onlyLetters(field){
+            	field.val(field.val().replace(/[0-9]/gi,''));
+            }
+            
+            $("body").ready(function(){
+               $("form input").each(function(){
+                  if($(this).attr("data-onlyletters")){
+               		onlyLetters($(this));
+							$(this).val(removeSpecialChar($(this).val()));
+               	}
+               })
+            	
+            	$("form input").keyup(function(){
+                  if($(this).attr("data-onlyletters")){
+               		onlyLetters($(this));
+							$(this).val(removeSpecialChar($(this).val()));
+               	}
+               })
+            })				
+					
+				$(function(){
+					//Inserido para validação de decimal
+					$("input.ps-giw-decimal").keyup(function(e) {
+						
+						 var startPos = this.selectionStart;
+						 var endPos = this.selectionEnd;
+
+			
+						var code = (e.keyCode || e.which);
+						// do nothing if it's an arrow key
+						if(code == 37 || code == 38 || code == 39 || code == 40) {
+							return;
+						}
+						
+						//var rg = /^[^0-9]\d*(\,\d+)?$/g;
+						var val = $(this).val();
+						var rg = /[^0-9\,]/g;
+						val = $(this).val().replace(rg,"");
+						if(val[0] == ",") val = val.substring(1);
+						//if(val[val.length -1] == ",") val = val.substring(0,val.length-1);
+						
+						if(val.replace(/[^\,]/g,"").length > 1) {
+							var found = false;
+								for(var i = 0; i < val.length; i++) {
+									if(val[i] == "," && !found) found = true;
+									else if(val[i] == ",") {
+										val = val.substring(0,i) + val.substring(++i);
+										break;
+									}
+								}
+						}
+						if($(this).is("[data-fixto]")) {
+							var fixto = $(this).attr("data-fixto");
+							if(val.replace(/[^\,]/g,"").length > 0) {
+								if(val.split(",")[1].length > parseInt(fixto)) {
+									while(val.split(",")[1].length > parseInt(fixto)) {
+										val = val.substring(0,val.length-1);
+									}
+								}						
+								
+							}
+						}
+						
+						$(this).val(val);
+						this.setSelectionRange(startPos, endPos);
+					});
+					
+					$("input[data-validator]").each(function() {
+						if($(this).is("[data-validator = 'placa']") || $(this).is("[data-validator = 'chassi']")) {
+							$(this).keyup(function(){
+								$(this).val($(this).val().toUpperCase());
+							});
+						}
+					});
+					
+					$("input[data-validator]").each(function() {
+						if($(this).is("[data-validator = 'chassi']")) {
+							$(this).keyup(function(){
+								$(this).val($(this).val().toUpperCase());
+								var str_acento		= "áàãâäéèêëíìîïóòõôöúùûüñÑÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÖÔÚÙÛÜºª°´`^~<>?!";
+								var str_sem_acento  = "aaaaaeeeeiiiiooooouuuunNAAAAAEEEEIIIIOOOOOUUUUoao        ";
+				
+								var strToReplace = $(this).val();
+								var nova="";
+				
+								if(strToReplace) {
+									for (var i = 0; i < strToReplace.length; i++) {
+										if (str_acento.indexOf(strToReplace[i]) != -1) {
+											nova+=str_sem_acento.substr(str_acento.search(strToReplace.substr(i,1)),1);
+										} else if(strToReplace[i] == "Ç") {
+											nova+="";
+										} else if(strToReplace[i] == "&") {
+											nova+="&amp;";
+										} else if(strToReplace[i] == "'") {
+											nova+="";
+										} else {
+											nova+=strToReplace.substr(i,1);
+										}
+									}
+								}
+								$(this).val(nova);
+							});
+						}
+					});
+					
+					$("body").on("change","input[data-validator = 'placa']",function() { placaController($(this), true) });
+					$("body").on("blur","input[data-validator = 'placa']",function() { placaController($(this), true) });
+					
+					$("body").on("change","input[data-validator = 'chassi']",function() { chassiController($(this), true) });
+					$("body").on("blur","input[data-validator = 'chassi']",function() { chassiController($(this), true) });
+					
+					
+					// $("input[data-validator = 'placa']").change(function() { placaController($(this)) });
+					// $("input[data-validator = 'placa']").blur(function() { placaController($(this)) });
+					
+					// $("input[data-validator = 'chassi']").change(function() { chassiController($(this)) });
+					// $("input[data-validator = 'chassi']").blur(function() { chassiController($(this)) });
+					
+					$("input[data-validator = 'placa']").each(function() {
+						placaController($(this),false) 
+					});
+					
+					$("input[data-validator = 'chassi']").each(function() {
+						chassiController($(this),false) 
+					});
+					
+					$(":input[data-dates]").attr("readonly","true");
+					
+					$("body").on("keydown",":input[data-dates]",function(){
+						if($(this).is("[last-date]")) {
+							$(this).val($(this).attr("last-date"));
+					   } else {
+							$(this).val("");
+					   }
+					});
+					
+					$("body").on("keyup",":input[data-dates]",function(){
+						if($(this).is("[last-date]")) {
+							$(this).val($(this).attr("last-date"));
+					   } else {
+							$(this).val("");
+					   }
+					});
+					
+					$('.giw-date .ps-frm-calendar').each(function() {
+							
+						if($(this).is("[data-dependsto]")){ //Altera o Campo de data depndente
+							$(this).datepicker("option" , "onClose", function( selectedDate ) {
+								if(selectedDate && selectedDate != "__/__/____") {
+									var id = "#" + $(this).attr("data-dependsto");
+									$(id).datepicker( "option", "minDate", selectedDate );
+									$(this).attr("last-date",selectedDate);
+									
+									
+									var range = $(id).attr("data-range");
+								
+									if(range){
+										var d = parseDate(selectedDate);
+										var day = d.getDate();
+										day += parseInt(range);
+										d.setDate(day);
+										var res = dateToString(d);
+										if(parseDate($(id).val()) > d) $(id).val(res);
+										if($(id).is("[data-calendarmaxdate]")) {
+											if(parseDate($(id).data("calendarmaxdate")) < d) {
+												res = $(id).data("calendarmaxdate");
+											}
+										}
+										$(id).datepicker("option" , "maxDate", res);
+									}
+							
+								}
+							});
+						
+								
+							$(this).change(function(e){
+								var id = "#" + $(this).attr("data-dependsto");
+								var range = $(id).attr("data-range");
+								
+								if(range){
+									var d = parseDate($(this).val());
+									var day = d.getDate();
+									day += parseInt(range);
+									d.setDate(day);
+									var res = dateToString(d);
+									if(parseDate($(id).val()) > d) $(id).val(res);
+									if($(id).is("[data-calendarmaxdate]")) {
+										if(parseDate($(id).data("calendarmaxdate")) < d) {
+											res = $(id).data("calendarmaxdate");
+										}
+									}
+									//$(id).datepicker("option" , "maxDate", res);
+								}
+								e.preventDefault();
+							});
+							
+							//Verifica range on load
+							var id = "#" + $(this).attr("data-dependsto");
+							var range = $(id).attr("data-range");
+							if(range && $(this).val() != ''){
+								var d = parseDate($(this).val());
+								var day = d.getDate();
+								day += parseInt(range);
+								d.setDate(day);
+								var res = dateToString(d);
+								if(parseDate($(id).val()) > d) $(id).val(res);
+								if($(id).is("[data-calendarmaxdate]")) {
+									if(parseDate($(id).data("calendarmaxdate")) < d) {
+										res = $(id).data("calendarmaxdate");
+									}
+								}
+								$(id).datepicker("option" , "maxDate", res);
+							}
+						} else if($(this).is("[data-dependsfrom]")){ //Altera o Campo de data dependente
+							$(this).datepicker("option" , "onClose", function( selectedDate ) {
+									if(selectedDate &&  selectedDate != "__/__/____") {
+										var id = "#" + $(this).attr("data-dependsfrom");
+							
+										$(id).datepicker( "option", "maxDate", selectedDate );
+										$(this).attr("last-date",selectedDate);
+										
+										var range = $(this).attr("data-range");
+										if(range){
+											var d = parseDate(selectedDate);
+											var day = d.getDate();
+											day += parseInt(range);
+											d.setDate(day);
+											var res = dateToString(d);
+											
+											if(parseDate($(this).val()) > d) $(this).val(res);
+										}
+									}
+							});
+						
+							
+							$(this).change(function(e){
+							
+								var id = "#" + $(this).attr("data-dependsfrom");
+								var range = $(this).attr("data-range");
+								if(range){
+									var d = parseDate($(id).val());
+									var day = d.getDate();
+									day += parseInt(range);
+									d.setDate(day);
+									var res = dateToString(d);
+									
+									if(parseDate($(this).val()) > d) $(this).val(res);
+								}
+								e.preventDefault();
+							});
+						
+							var id = "#" + $(this).attr("data-dependsfrom");
+							var range = $(this).attr("data-range");
+							if(range && $(this).val() != ''){
+								var d = parseDate($(id).val());
+								var day = d.getDate();
+								day += parseInt(range);
+								d.setDate(day);
+								var res = dateToString(d);
+								
+								if(parseDate($(this).val()) > d) $(this).val(res);
+							}
+						} else {
+							var iptCal = $(this);
+							$(this).datepicker("option" , "onClose", function( selectedDate ) {
+								if(selectedDate &&  selectedDate != "__/__/____") {
+									$(this).attr("last-date",selectedDate);
+								}
+								if(typeof applyShowRules === 'function') {
+									applyShowRules();
+								}
+								if(iptCal.is("[data-submit-on-change]")) {
+									var form = iptCal.closest("form");								
+									/* setTimeout para dar tempo de alterar outros campos. Ex: quando busca endereço no mapa, altera o cep mas também logradouro.
+									   Isso evita de dar submit logo após alterar o cep. */
+									if(!iptCal.is("[data-from-js]")){
+										window.setTimeout(function() {
+											if($(form).prop("action")) {
+												if($.type($(form).prop("action")) === "object"){
+													if($(form).attr("action") == "") showGIWLoading = true;
+												} else {
+													var textForm = $(form).prop("action");
+													if(textForm.indexOf("gerenciadorinterface") != -1) showGIWLoading = true;
+												}
+											} else if ($(form).prop("action") == "") {
+												showGIWLoading = true;
+											}
+											$("<input type='hidden' name='trigger_element' value='" + iptCal.prop("name") + "'/>").appendTo(form);
+											form[0].submit();
+										}, 205);
+									}
+								}
+							});
+						}
+				
+					});
+					
+				});
+				
+				function dateSelectGuide(date,iptCal) {
+					/*if(iptCal.is("[data-submit-on-change]")) {
+						var form = iptCal.closest("form");								
+							if(!iptCal.is("[data-from-js]")){
+							window.setTimeout(function() {
+								if($(form).prop("action")) {
+									if($.type($(form).prop("action")) === "object"){
+										if($(form).attr("action") == "") showGIWLoading = true;
+									} else {
+										var textForm = $(form).prop("action");
+										if(textForm.indexOf("gerenciadorinterface") != -1) showGIWLoading = true;
+									}
+								} else if ($(form).prop("action") == "") {
+									showGIWLoading = true;
+								}
+								$("<input type='hidden' name='trigger_element' value='" + iptCal.prop("name") + "'/>").appendTo(form);
+								form.submit();
+							}, 210);
+						}
+					}*/
+				}
+				function parseDate(input) {
+				  var parts = input.split('/');
+				  return new Date(parts[2], parts[1]-1, parts[0]); // Note: months are 0-based
+				};
+				
+				function pad(num, size) {
+					var s = num+"";
+					while (s.length < size) s = "0" + s;
+					return s;
+				};
+			
+				function dateToString(d) {
+					return pad(d.getDate(),2) + "/" + pad(d.getMonth() + 1 ,2) + "/" + d.getFullYear();
+				}
+				
+				function wizardValidation(id){
+					return psLib.FormValidate($(id), true, false);
+					
+				}
+				
+				function validateAllUploads(form) {
+					var uploadOk = true;
+					$(".giw-file input[type='file'][required]:visible", form).each(function() {
+						if ($(this).closest(".giw-file").next().is(".giw-file-error"))$(this).closest(".giw-file").next().remove();
+						if ($(this).val() == "") {
+							uploadOk = false;
+							var errorDiv = $('<div class="ps-frm-ctt-error giw-file-error" id="ps-frm-ctt-error-file"><div style="border-radius:3px!important;" class="ps-panel ps-panel-ico ps-panel-error"><div class="ps-panel-ctt"><span class="ps-ico ps-ico-alert"/>Upload obrigatório</div></div></div>');
+							$(errorDiv).insertAfter($(this).closest(".giw-file"));
+						}
+					});
+					return uploadOk;
+				}
+				
+				function validateAvailability(form) {
+					var aval = true;
+					$(":input.ps-frm-calendar-availability[required]", form).each(function() {
+						if($(this).next().is(":visible")) {
+							$(this).closest(".giw-date").find(".ps-frm-ctt-error").hide();
+							if ($(this).val() == "") {
+								aval = false;
+								$(this).closest(".giw-date").find(".ps-frm-ctt-error").show();
+								//var errorDiv = $('<div class="ps-frm-ctt-error giw-file-error" id="ps-frm-ctt-error-file"><div style="border-radius:3px!important;" class="ps-panel ps-panel-ico ps-panel-error"><div class="ps-panel-ctt"><span class="ps-ico ps-ico-alert"/>Upload obrigatório</div></div></div>');
+								//$(errorDiv).insertAfter($(this).closest(".giw-date"));
+							}
+						}
+					});
+					return aval;
+				}
+				
+				function validateSelectList(form) {
+					var aval = true;
+					$(":input.ps-frm-select-list", form).each(function() {
+						if($(this).next().is(":visible")) {
+							$(this).closest(".giw-comboBox").find(".ps-frm-ctt-error").hide();
+							if ($(this).val() == "") {
+								aval = false;
+								$(this).closest(".giw-comboBox").find(".ps-frm-ctt-error").show();
+								//var errorDiv = $('<div class="ps-frm-ctt-error giw-file-error" id="ps-frm-ctt-error-file"><div style="border-radius:3px!important;" class="ps-panel ps-panel-ico ps-panel-error"><div class="ps-panel-ctt"><span class="ps-ico ps-ico-alert"/>Upload obrigatório</div></div></div>');
+								//$(errorDiv).insertAfter($(this).closest(".giw-date"));
+							}
+						}
+					});
+					return aval;
+				}
+				
+				$("body").on("change",":input.ps-frm-calendar-availability[required]",function(){
+					var form = $(this).closest("form");
+					if(!validateAvailability(form)) $(this).closest('form').attr("data-avalfail","true");
+					else $(this).closest('form').removeAttr("data-avalfail");
+				});
+				
+				/*$("body").on("change",".giw-file input[type='file'][required]",function(){
+					var form = $(this).closest("form");
+					if(!validateAllUploads(form)) $(this).closest('form').attr("data-uploadfail","true");
+					else $(this).closest('form').removeAttr("data-uploadfail");
+				});*/
+				
+				$("body").on("change",":input.ps-frm-select-list",function(){
+					var form = $(this).closest("form");
+					if(!validateSelectList(form)) $(this).closest('form').attr("data-sellistfail","true");
+					else $(this).closest('form').removeAttr("data-sellistfail");
+				});
+				
+				$(".giw-submitButton").click(function(){
+					
+				   if($(this).closest("form").find('div:eq(0)').attr('use-session-storage') == 'true'){
+					$("select").each(function(){
+						if($(this).val() != undefined && $(this).val() != '' && $(this).attr('id') != undefined && $(this).attr('id') != '' && 
+						   $(this).find('option:selected').text() != undefined && $(this).find('option:selected').text() != ''){
+						   window.sessionStorage.setItem($(this).attr('id'), $(this).find('option:selected').text());
+						}
+					});
+				   }	
+
+
+                localStorage.removeItem("referrerPage");
+					var form = $(this).closest("form");
+					if(!validateAllUploads(form)) $(this).closest('form').attr("data-uploadfail","true");
+					else $(this).closest('form').removeAttr("data-uploadfail");
+					if(!validateAvailability(form)) $(this).closest('form').attr("data-avalfail","true");
+					else $(this).closest('form').removeAttr("data-avalfail");
+						if(!validateSelectList(form)) $(this).closest('form').attr("data-sellistfail","true");
+					else $(this).closest('form').removeAttr("data-sellistfail");
+				});
+				
+				$("body").on("click","ul.ps-frm-select-list > li > a",function() {
+					validateSelectList($(this).closest("form"));
+				});
+				
+				function submitFormGuide(btn) {
+					var form = $(btn).closest('form');
+					if (typeof reset_dt_view== 'function') { 
+					reset_dt_view();
+					}				
+					
+					if($(btn).is("[name]") && $(btn).is("[value]")) {
+						$("<input type='hidden' id='"+$(btn).attr("name")+"' name='"+$(btn).attr("name")+"' value='"+$(btn).attr("value")+"' />").appendTo($(btn).closest("form"));
+					}
+					
+					var extraTests = true;
+					if ($(form).is("[data-uploadfail]")) extraTests = false;
+					if ($(form).is("[data-avalfail]")) extraTests = false;
+					if ($(form).is("[data-sellistfail]")) extraTests = false;
+					
+					
+					if (extraTests) {
+						if(typeof interpretar == 'function') {
+							if($(form).find("input[data_smartsearch]:visible").length){
+								$("input[data_smartsearch]:visible").each(function(){
+									var id = "#" + $(this).attr("id");
+									
+									var createCallback = function(f1) {
+										//if(evt) {
+											return function(ok) {
+												if (ok) {
+													//$(f1).data("skip", true).submit();
+													if(!$(btn).hasClass('ps-btn-disabled')) {
+														updateFields();
+														if($(form).prop("action")) {
+															if($.type($(form).prop("action")) === "object"){
+																if($(form).attr("action") == "") showGIWLoading = true;
+															} else {
+																var textForm = $(form).prop("action");
+																if(textForm.indexOf("gerenciadorinterface") != -1) showGIWLoading = true;
+															}
+														} else if ($(form).prop("action") == "") {
+															showGIWLoading = true;
+														}
+														$(form)[0].submit(); 
+														$(btn).addClass('ps-btn-disabled');
+													}
+												}
+											}
+									};
+									
+									var req = $(this).prop("[required]");
+									interpretar(id, req, createCallback(form));
+									
+								});
+							
+								return false;
+							}else{
+								if(!$(btn).hasClass('ps-btn-disabled')) {
+									updateFields();
+									if($(form).prop("action")) {
+										if($.type($(form).prop("action")) === "object"){
+											if($(form).attr("action") == "") showGIWLoading = true;
+										} else {
+											var textForm = $(form).prop("action");
+											if(textForm.indexOf("gerenciadorinterface") != -1) showGIWLoading = true;
+										}
+									} else if ($(form).prop("action") == "") {
+										showGIWLoading = true;
+									}
+									$(form)[0].submit(); 
+									$(btn).addClass('ps-btn-disabled');
+								}
+							}
+						}else{
+							if(!$(btn).hasClass('ps-btn-disabled')) {
+								updateFields();
+								if($(form).prop("action")) {
+									if($.type($(form).prop("action")) === "object"){
+										if($(form).attr("action") == "") showGIWLoading = true;
+									} else {
+										var textForm = $(form).prop("action");
+										if(textForm.indexOf("gerenciadorinterface") != -1) showGIWLoading = true;
+									}
+								} else if ($(form).prop("action") == "") {
+									showGIWLoading = true;
+								}
+								$(form)[0].submit(); 
+								$(btn).addClass('ps-btn-disabled');
+							}
+						}
+					}
+					
+				}
+				
+				function updateFields() {
+				
+					$(":input[data-split]").each(function(){
+						
+						if($(this).val() != ""){ 
+                          if($(this).is("[data-dontupdate]")) {
+								$(this).attr("data-from-js", "true")
+							} else {
+								$(this).attr("data-from-js", "true").change();
+							}
+						}
+					});
+					
+					window.setInterval(function(){},100);
+				}
+				
+				$(":input[data-submit-on-change]").change(function() {
+					var form = this.form;
+					var input = $(this);
+					/* setTimeout para dar tempo de alterar outros campos. Ex: quando busca endereço no mapa, altera o cep mas também logradouro.
+					   Isso evita de dar submit logo após alterar o cep. */
+					if(!$(this).is("[data-from-js]")){
+						window.setTimeout(function() {
+							if($(form).prop("action")) {
+								if($.type($(form).prop("action")) === "object"){
+									if($(form).attr("action") == "") showGIWLoading = true;
+								} else {
+									var textForm = $(form).prop("action");
+									if(textForm.indexOf("gerenciadorinterface") != -1) showGIWLoading = true;
+								}
+							} else if ($(form).prop("action") == "") {
+								showGIWLoading = true;
+							}
+							$("<input type='hidden' name='trigger_element' value='" + input.prop("name") + "'/>").appendTo(form);
+							form.submit();
+						}, 200);
+					}
+				});
+				
+				function controlDates(field) {
+					var field = $(field);
+					
+					if($(this).is("data-dependsto")) {
+					
+					}
+				}
+				
+			
+		

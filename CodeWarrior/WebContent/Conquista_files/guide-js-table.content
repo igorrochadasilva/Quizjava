@@ -1,0 +1,392 @@
+
+			
+		
+			
+			
+		
+			$(function(){
+				
+				$("tr > th > input.selAll").each(function(){
+					var allTrue = true;
+					$(this).closest("table").find("tbody").find(".selectableRow:visible").each(function(){
+						if(!$(this).is(":checked")) allTrue = false;
+					});
+					if(allTrue) $(this).prop("checked","true");
+				});
+				
+				$("body").on("click","tr > th > input.selAll",function(){
+					if($(this).is(":checked")) {
+						$(this).closest("table").find("tbody").find(".selectableRow:visible").prop("checked","true");
+					} else {
+						$(this).closest("table").find("tbody").find(".selectableRow").removeAttr("checked");
+					}
+					
+					updateSums();
+				});
+				
+				$("body").on("click","tr > td > input.selectableRow",function(){
+					if(!$(this).is(":checked")) {
+						$(this).closest("table").find("thead").find(".selAll").removeAttr("checked");
+					}
+					
+					updateSums();
+				});
+				
+				$(".ps-giw-datagrid").each(function(){
+					var table = $(this);
+					var tableReference = table.clone();
+					tableReference.removeClass("ps-giw-datagrid").addClass("giw-tablereference").hide().insertBefore(table);
+					
+					var tdContents = [];
+
+					$("tr th", table).each(function(idxTh){
+						if($(this).is("[data-showfalse]")) {
+							$(this).remove();
+							$("tr", table).each(function() {
+								$("td", this).eq(idxTh).remove();
+							});
+						}
+					});
+					
+					$(table).find("tbody tr td").each(function(idx, el) {
+						tdContents.push($(el).html());
+						// $(el).html(idx);
+						var txtTd = $(el).text();
+						var newTxt = " ";
+						for(var ch = 0; ch < txtTd.length; ch++) {
+							newTxt += txtTd[ch] + " ";
+						}
+						$(el).html(newTxt + "[|"+idx+"|]");
+					});
+
+					var templateFunctionName = "data_itemtemplate_" + table.attr("id");
+
+					$("th",table).each(function(i){
+						$(this).attr("data-itemtemplate", templateFunctionName);
+					});
+
+					window[templateFunctionName] = function (item, row) {
+						var itemIdx = item.substring(item.indexOf("[|") + 2, item.indexOf("|]"))
+						return tdContents[itemIdx];
+					};
+
+					table.addClass("ps-datagrid");
+					psLib.DataGrid(table.parent());
+					
+					var giwFilter = table.is("[data-giw-filtering]");
+					
+					setTimeout(function() { 
+						var dataId = $(table).parent().find("div.jsgrid");
+						psLib.Init(dataId.attr("id")); 
+						
+						if(giwFilter){
+							var filterLine = $(".jsgrid-filter-row", dataId).clone();
+							filterLine.addClass("giw-filter-row").insertBefore($(".jsgrid-filter-row", dataId)).show();
+							$("td", filterLine).each(function(idx){
+								var name = $(this).closest("tbody").find("tr.jsgrid-header-row").find("th").eq(idx).text()
+								name = $.trim(name);
+								name = name.toLowerCase();
+								name = name.replace(/ /g,"-");
+								var str_acento		= "áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÖÔÚÙÛÜÇºª°";
+								var str_sem_acento  = "aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUCoao";
+								var nova = "";
+								for (var i = 0; i < name.length; i++) {
+									if (str_acento.indexOf(name[i]) != -1) {
+										nova+=str_sem_acento.substr(str_acento.search(name.substr(i,1)),1);
+									} else {
+										nova+=name.substr(i,1);
+									}
+								}
+	
+								$(this).attr("data-name", nova);
+								
+								if($(table).find("th").eq(idx).is("[data-filtercombo]")) {
+									var comboHolder = $("<div class='ps-frm-select'></div>");
+									var combo = $('<select></select>');
+									
+									var optData =  new Array();
+									var finalOpt =  new Array();
+									$("tr", table).each(function() {
+										$("td", this).each(function(i){
+											if(i == idx) {
+												var txtToSb = $(this).text().substring(0, $(this).text().indexOf("[|"));
+												txtToSb = $.trim(txtToSb);
+												var foundSpace = false;
+												for(var ch = 0; ch < txtToSb.length; ch++) {
+													if(txtToSb[ch] == " ") {
+														if(foundSpace && txtToSb[ch + 1] == ' ') {
+															txtToSb = txtToSb.substring(0, ch) + txtToSb.substring(ch+1, txtToSb.length);
+															ch--;
+														} else if(!foundSpace) {
+															txtToSb = txtToSb.substring(0, ch) + txtToSb.substring(ch+1, txtToSb.length);
+															ch--;
+														}
+														foundSpace = true;
+													} else {
+														foundSpace = false;
+													}
+												}
+												optData.push(txtToSb);
+											}
+										});
+									});
+									
+									for(var opts = 0; opts < optData.length; opts++) {
+										if(finalOpt.indexOf(optData[opts]) == -1) finalOpt.push(optData[opts]);
+									}
+									$("<option value=''>Filtrar</option>").appendTo(combo);	
+									finalOpt = finalOpt.sort();
+									for(var opts = 0; opts < finalOpt.length; opts++) {
+										var optSel = $("<option value=''>"+finalOpt[opts]+"</option>");	
+										$(optSel).appendTo(combo);
+									}
+									$(comboHolder).html(combo);
+									$(this).html(comboHolder);
+								}
+							});
+						}
+						
+						$("th", table).each(function(i){
+							if($(this).is("[order-by]")) {
+								var tp = $(this).attr("order-by");
+								
+								$(dataId).jsGrid("sort", i, tp);
+							}
+						});
+					},1000);
+					
+					function doGIWFilter(tableGrid) {
+						var searchObj = new Object();
+						
+						$(".giw-filter-row :input").each(function(idx){
+							var isText = $(this).is("[type = 'text']")
+							var val;
+							
+							if(isText) val = $(this).val();
+							else if($(this).find("option:selected").text() != "Filtrar") val = $(this).find("option:selected").text();
+							else val = "";
+							
+							var newVal = " ";
+							if(val != "" && val != "Filtro indisponível") {
+								for(var ch = 0; ch < val.length; ch++) {
+									newVal += val[ch] + " ";
+								}
+							}
+							val = newVal;
+							var name = $(this).closest("td").attr("data-name");
+							var data = tableGrid.data("JSGrid")['controller']['data'];
+							var found = false;
+							for(var dt = 0; dt < data.length; dt++) {
+								var txt = data[dt][name]
+								txt = txt.substring(0,txt.indexOf("[|"));
+								val = $.trim(val);
+								txt = $.trim(txt);
+								if(isText) {
+									if(txt.toLowerCase().indexOf(val.toLowerCase()) != -1) {
+										found = true;
+										break;
+									}
+								} else {
+									if(txt.toLowerCase() == val.toLowerCase()) {
+										found = true;
+										break;
+									}
+								}
+							}
+							if(found) {
+								searchObj[name] = val;
+							} else if(val == "") {
+								searchObj[name] = ""
+							} else	{
+								searchObj[name] = "%%%%%%%%%%%%%%%%%%%%%%%";
+							}
+						});
+						
+						tableGrid.jsGrid("search", searchObj);
+					}
+					
+					$("body").on("keyup", ".giw-filter-row input[type = 'text']", function(){
+						doGIWFilter($(this).closest("div.jsgrid"));
+					});
+					
+					$("body").on("change", ".giw-filter-row select", function(){
+						doGIWFilter($(this).closest("div.jsgrid"));
+					});
+				});
+				
+				function comparatorArr(pos,orderType) {
+					return function(a, b) {
+						if(orderType == "asc") {
+						   return a[pos] - b[pos];
+						} else {
+						   return b[pos] - a[pos];
+						}
+					}
+				}
+									
+				$("a.downloadxls").click(function(e) {
+					var link = $(this);
+					
+					//Encontra tabela associada ao link
+					var generalHolder = link.closest(".ps-row").parent(); 
+					var t = link.closest(".ps-row").parent().find(".giw-tablereference") //Alterar para ID quando Caramez mudar guide
+					
+					if (t.length == 0) {
+						t = link.closest(".ps-row").parent().find(".ps-table");
+						if(t.is(".ps-giw-datagrid") || t.is(".giw-datatable")) t = false;
+					}
+					
+					if (t.length > 0) {
+						
+						var tableDataArr = new Array();
+						
+						$("tr", t).each(function(){
+							var thisTr = $(this);
+							var lineArr = new Array();
+							var filtered = false;
+							$("td",thisTr).each(function(idx){
+								// var txtToSb = $(this).text().substring(0, $(this).text().indexOf("[|"));
+								var txtToSb = $(this).text();
+								txtToSb = $.trim(txtToSb);
+								
+								if ($(".giw-filter-row", generalHolder).length > 0) {
+									if($(".giw-filter-row td", generalHolder).eq(idx).find("input[type = 'text']").length > 0 && $(".giw-filter-row td", generalHolder).eq(idx).find("input[type = 'text']").val() != '') {
+										if(txtToSb.toLowerCase().indexOf($(".giw-filter-row td", generalHolder).eq(idx).find(":input").val().toLowerCase()) == -1) {
+											filtered = true;
+										}
+									} else if($(".giw-filter-row td", generalHolder).eq(idx).find("select").find("option:selected").length > 0) {
+										if($(".giw-filter-row td", generalHolder).eq(idx).find("select").find("option:selected").text() != "Filtrar") {
+											if(txtToSb.toLowerCase() != $(".giw-filter-row td", generalHolder).eq(idx).find("select").find("option:selected").text().toLowerCase()) {
+												filtered = true;
+											}
+										}
+									}
+								}
+								
+								lineArr.push(txtToSb);
+							});
+							
+							if(lineArr.length > 0 && !filtered) tableDataArr.push(lineArr);
+						});
+						
+						if($(".jsgrid-header-sort", generalHolder).length > 0) {
+							$(".jsgrid-header-row th", generalHolder).each(function(idxTh) {
+								if($(this).is(".jsgrid-header-sort")) {
+									var orderBy = idxTh;
+									var orderType;
+									var name = $(this).text()
+									name = $.trim(name);
+									name = name.toLowerCase();
+									name = name.replace(/ /g,"-");
+									var str_acento		= "áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÖÔÚÙÛÜÇºª°";
+									var str_sem_acento  = "aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUCoao";
+									var nova = "";
+									for (var i = 0; i < name.length; i++) {
+										if (str_acento.indexOf(name[i]) != -1) {
+											nova+=str_sem_acento.substr(str_acento.search(name.substr(i,1)),1);
+										} else {
+											nova+=name.substr(i,1);
+										}
+									}
+									orderBy = name;
+									if($(this).is(".jsgrid-header-sort-asc")) {
+										orderType = "asc";
+									} else {
+										orderType = "desc";
+									}
+									
+									$("th",t).each(function(idxTH2){
+										var name2 = $(this).text()
+										name2 = $.trim(name2);
+										name2 = name2.toLowerCase();
+										name2 = name2.replace(/ /g,"-");
+										var str_acento		= "áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÖÔÚÙÛÜÇºª°";
+										var str_sem_acento  = "aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUCoao";
+										var nova = "";
+										for (var i = 0; i < name2.length; i++) {
+											if (str_acento.indexOf(name2[i]) != -1) {
+												nova+=str_sem_acento.substr(str_acento.search(name2.substr(i,1)),1);
+											} else {
+												nova+=name2.substr(i,1);
+											}
+										}
+										if(name2 == name) orderBy = idxTH2;
+									});
+									
+									tableDataArr.sort(comparatorArr(orderBy,orderType));
+								}
+							});
+						}
+								
+						var fields = $("th",t);
+						
+						var dataJson = new Array();
+			
+						dataJson.push("[");
+						dataJson.push("["); //Primeira linha: título
+						
+						for(var tls = 0; tls < fields.length; tls++) {
+							dataJson.push("[");
+							var name = $(fields[tls]).text()
+							// name = $.trim(name);
+							// name = name.toLowerCase();
+							// name = name.replace(/ /g,"-");
+							// var str_acento		= "áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÖÔÚÙÛÜÇºª°";
+							// var str_sem_acento  = "aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUCoao";
+							// var nova = "";
+							// for (var i = 0; i < name.length; i++) {
+								// if (str_acento.indexOf(name[i]) != -1) {
+									// nova+=str_sem_acento.substr(str_acento.search(name.substr(i,1)),1);
+								// } else {
+									// nova+=name.substr(i,1);
+								// }
+							// }
+							
+							dataJson.push("\"" + name + "\",\"\",\"\"");
+							if(tls == fields.length) {
+								dataJson.push("]");
+							} else {
+								dataJson.push("],");
+							}
+						}
+						
+						dataJson.push("],");
+						
+						for (var line = 0; line < tableDataArr.length; line++) { //Outras linhas
+							
+							dataJson.push("[");
+							
+							for(var tds = 0; tds < tableDataArr[line].length; tds++) {
+								dataJson.push("[");
+								dataJson.push("\"" + tableDataArr[line][tds] + "\",");
+								dataJson.push("\"\",");
+								dataJson.push("''");
+								dataJson.push("],");
+							}
+							dataJson[dataJson.length-1] = "]";
+							dataJson.push("],");
+						}
+						
+						dataJson[dataJson.length-1] = "]";
+						dataJson.push("]");
+						
+						var ipt = $("<input type='hidden' name='data' id='data' />")
+						ipt.val(dataJson.join(""));
+						
+						var filename = $(this).is("[data-filename]") ? $(this).attr("data-filename")  : "download.xls"
+						if(filename.indexOf(".xls") == -1) filename += ".xls";
+						
+						var form = $("<form action='giw2processXLS.do?debug=true&fileName="+filename+"' method='POST'></form>");
+						ipt.appendTo(form);dataJson.join("")
+						form.appendTo('body');
+						form.submit();
+						form.detach(); //Remove form
+					}
+					e.preventDefault();
+					return false;
+				})
+			});
+		
+	
+		
+	

@@ -1,0 +1,70 @@
+function clickOnMenu(link){
+var objMenu = $('#'+link.trim()).eq(0);
+
+$(objMenu).click();
+return false;
+}
+$( document ).ready(function() {
+	
+	$("a[href$='#tutorial']").click(function(event){
+
+		event.preventDefault(); 
+		tutorialPdc.startTutorial();
+	});
+});
+
+var PDC = (function ($) {
+    "use strict";
+    var includedJavascripts = [],
+        includedStyleSheets= [];
+
+    // Loads a JavaScript file if it as not yet been loaded
+    return {
+        loadJs: function (location, async, onload) {
+            async = typeof async !== 'undefined' ? async : true;
+            if ($.inArray(location, includedJavascripts) >= 0) { return; }
+
+            includedJavascripts.push(location);
+
+            // Adding the script tag to the head as suggested before
+            var head = document.getElementsByTagName('head')[0];
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = location;
+
+            if (typeof onload !== 'undefined') {
+                // Then bind the event to the callback function.
+                // There are several events for cross browser compatibility.
+                script.onreadystatechange = onload;
+                script.onload = onload;
+            }
+            if (script.async) {
+                script.async = async;
+            }
+
+            // Fire the loading
+            head.appendChild(script);
+        }
+	};
+})(jQuery);
+
+
+      function waitIframe() { 
+               var frame = $("#iframe-servicos"); 
+               var loading = $('<div style="text-align: center"><img src="http://aplwebhml/gerenciadorinterface/giw2/images/ico/map/loading2.gif" style="width:80px; height: 80px;"/></div>');
+               if (frame.length > 0) { 
+                       frame.hide(); 
+                       loading.insertAfter('#iframe-servicos'); 
+                       window.addEventListener("message", getLoadNotification, false); 
+               } 
+               
+               function getLoadNotification(event) { 
+                       if (event.data && event.data.indexOf('loaded') >= 0) { 
+                               console.debug('Portal: recebido loadNotification', event.data); 
+                               loading.remove(); 
+                               frame.show(); 
+                       } 
+               } 
+       } 
+
+      //waitIframe(); 

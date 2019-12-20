@@ -1,0 +1,77 @@
+function readCookie(name){
+	var ko=name+"=";
+	var ca=document.cookie.split(";");
+	for(var i=0;i<ca.length;i++){
+		var c=ca[i];
+		while(c.charAt(0)==" "){
+			c=c.substring(1,c.length);
+		}
+		if(c.indexOf(ko)==0){
+			return c.substring(ko.length,c.length);
+		}
+	}
+	return null;
+}
+
+$('#lupa-mobile').click(function() {
+  if($(this).hasClass('ps-ico-magnifi-glass')){
+	$(this).removeClass( "ps-ico-magnifi-glass" );
+	$(this).addClass( "ps-ico-arrow-up" );
+	$('.buscaMobile').show();
+	if($('.paddingtop100')!=null && $('.paddingtop100').length>0){
+		$('.paddingtop100').css("padding-top", parseInt($('.paddingtop100').css("padding-top"))+50);
+	}
+	else if($('.wrap-header-produto')!=null && $('.wrap-header-produto').length>0){
+		$('.wrap-header-produto').css("padding-top", parseInt($('.wrap-header-produto').css("padding-top"))+50);
+	}
+  }
+  else{
+	$(this).removeClass( "ps-ico-arrow-up" );
+	$(this).addClass( "ps-ico-magnifi-glass" );
+	$('.buscaMobile').hide();
+	if($('.paddingtop100')!=null && $('.paddingtop100').length>0){
+		$('.paddingtop100').css("padding-top", parseInt($('.paddingtop100').css("padding-top"))-50)
+	}
+	else if($('.wrap-header-produto')!=null && $('.wrap-header-produto').length>0){
+		$('.wrap-header-produto').css("padding-top", parseInt($('.wrap-header-produto').css("padding-top"))-50);
+	}
+  }
+});
+
+
+var cookieCriado = readCookie('flagPopupExibido');
+if(cookieCriado==null || cookieCriado=='N'){
+	var handler2 = window.setInterval(
+		function() {
+			var chamouAjax = false;
+			if($("#ModalSenha").length > 0){
+				window.clearInterval(handler2);
+			}
+			else{
+				var retornoBemVindo = false;
+				if (typeof funcaoBemVindo == 'function') { 
+					retornoBemVindo = funcaoBemVindo();
+				}
+				if(!retornoBemVindo){
+					if ($("#btnShowModalMsg")!= null && $("#btnShowModalMsg").length>0) {						
+						$('#btnShowModalMsg').click();
+						$("#ModalLarge")[0].style.display = 'block';
+						$("#ModalLarge").addClass('ps-modal-visible');
+						createNewCookie('flagPopupExibido','S', 86400 );
+						window.clearInterval(handler2);
+					}else{
+						var retornoNovidade = false;
+						if (typeof funcaoNovidade == 'function') { 
+							retornoNovidade = funcaoNovidade();
+						}
+						if(retornoNovidade){
+							window.clearInterval(handler2);
+						}
+					}
+				}else{
+					window.clearInterval(handler2);
+				}
+			}
+		}, 500
+	);
+}

@@ -1,0 +1,133 @@
+
+			
+			
+			function searchSuccess(id,goBack) {
+				if($("iframe", id).contents().find(".giwSuccess[data-success='true']").length > 0) {
+					if(goBack) {
+						window.history.back();
+					} else {
+						var href = window.location.href;
+						href.replace("refreshParentOnSuccess","");
+						var addToHref = $(id.split("_modal")[0]).attr("refreshparentonsuccessparam") != '' ? '&' + $(id.split("_modal")[0]).attr("refreshparentonsuccessparam") + '&' + "&refreshedOnSuccess=true": "";
+						if(href.indexOf("refreshedOnSuccess=true") == -1) addToHref += "&refreshedOnSuccess=true";
+						href += addToHref;
+						if(showGIWLoading != undefined) showGIWLoading = true;
+						window.location.href = href;
+					}
+				}
+			}
+			
+			function searchFail(id) {
+				if($("iframe", id).contents().find(".giwFail[data-fail='true']").length > 0) window.location.reload();
+			}
+			
+			function redirectSuccess(id, url) {
+				if($("iframe", id).contents().find(".giwSuccess[data-success='true']").length > 0) window.location = url;
+			}
+			
+			function closeAllModals(){
+				psLib.ModalShowHide($(".ps-modal"));
+			};
+			
+			$(function(){
+				
+				$(".ps-giw-modal[data-returnfunction]").each(function() {
+					var e = $(this);
+					var i = "undefined" != typeof e.data("modal") ? e.data("modal") : !1;
+					var ref = $(this);
+					var functionName = $(this).data("returnfunction");
+					window[functionName] = function(data) {
+						var froms = ref.data("returnfrom").split("|");
+						var tos = ref.data("returnto").split("|");
+						
+						for(var f = 0; f < froms.length; f++) {
+							var att = froms[f].split(".");
+							var val = data;
+							for(var at=0; at < att.length; at++) {
+								if(val[att[at]]) {
+									val = val[att[at]];
+								} else {
+									val = "";
+									break;
+								}
+							}
+							$(":input[name ='"+tos[f]+"']").val(val);
+						}
+						
+						var callbackFct = ref.data("callbackfct") != undefined && ref.data("callbackfct") != null ? ref.data("callbackfct").split("%"):false;
+						
+						if(callbackFct) {
+							for(var c = 0; c < callbackFct.length; c ++) {
+								try {
+									window[callbackFct[c].split("|")[1]](callbackFct[c].split("|")[0]);
+								} catch(e) {
+								}
+							}
+						}
+						
+						psLib.ModalShowHide(i);
+						if (e.data("submit-on-change") == true) {
+							e.closest("form")[0].submit();
+						}
+					};
+				});
+				
+				$("body").on("click", ".ps-giw-modal",function(t) {
+					var e = $(this);
+					var keepLocation = $(this).is("[data-keeplocation]");
+					var i = "undefined" != typeof e.data("modal") ? e.data("modal") : !1;
+					var n = "undefined" != typeof e.data("modalbackdropstatic") ? e.data("modalbackdropstatic") : !1;
+					var keyboard = "undefined" != typeof e.data("modalkeyboarddisable") ? e.data("modalkeyboarddisable") : !0;
+					var onShow = "undefined" != typeof e.data("modalonshow") ? e.data("modalonshow") : !1;
+					var onHide = "undefined" != typeof e.data("modalonhide") ? e.data("modalonhide") : !1;
+					
+					if(0 != i) {
+							$(i).data("current-location",document.documentElement.scrollTop);
+							psLib.ModalShowHide(i, n, keyboard, onShow, onHide); 
+							if(!keepLocation) window.scrollTo(0, 0);
+							window.parent.postMessage('openedModal', '*'); /* Pede customData para portal */
+						
+							//Voltar a posição inicial ao fechar modal
+							var postMsg = {};
+							postMsg .message = "getCurrentPosition";
+							window.parent.postMessage(JSON.stringify(postMsg ), "*");
+					}
+				});
+				
+				$("body").on("click", ".ps-giw-modal-close",function(t) {
+					var e = $(this);
+					var i = "undefined" != typeof e.data("modal") ? e.data("modal") : e.parent();
+					psLib.ModalShowHide(i)
+					if($(i).data("current-location") && $(i).data("current-location") != "undefined") {
+						document.documentElement.scrollTo(0,$(i).data("current-location"));
+					}
+					
+					//Voltar a posição inicial ao fechar modal
+					var postMsg = {};
+					postMsg .message = "setCurrentPosition";
+					window.parent.postMessage(JSON.stringify(postMsg ), "*");
+				});
+				
+				$(document).keyup(function(e) {
+					if (e.keyCode === 27) {
+						//Voltar a posição inicial ao fechar modal
+						var postMsg = {};
+						postMsg .message = "setCurrentPosition";
+						window.parent.postMessage(JSON.stringify(postMsg ), "*");
+					}
+				});
+				
+				//Fechar Loading e Zerar Timeout do GIW 2.0
+				try {
+					if (typeof window.parent['closeModal'] == 'function' && inIframe()) { 
+						window.parent['clearTimeoutModal']();
+						window.parent['closeModal']();
+					}
+				} catch(e) {
+				
+				}
+			
+			});
+		
+		
+		

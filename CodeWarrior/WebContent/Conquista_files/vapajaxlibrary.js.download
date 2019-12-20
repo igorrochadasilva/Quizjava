@@ -1,0 +1,39 @@
+if (typeof VignettePortal === 'undefined') {
+if (typeof vgnPortalContextRootName === 'undefined') {
+	var vgnPortalContextRootName ="";
+}
+	var VignettePortal = {
+		//set portal context url
+		portalContext: vgnPortalContextRootName || "/portal"
+	};
+
+	if (typeof vuitConfig === 'undefined') {
+		vuitConfig = {
+			baseUrl: VignettePortal.portalContext + '/jslib/vuit/',     // this is where all module paths will be relative to
+			modulePaths: {
+				'vapui': VignettePortal.portalContext + '/jslib/vapui'
+			},
+			isDebug: false,                     // no debug output by default
+			parseOnLoad: false                  // dont parse pages for widgets/connects by default
+		};
+	} else {
+		//don't blow away previous config
+		vuitConfig.parseOnLoad = false;
+		if (typeof vuitConfig.modulePaths === 'undefined') {
+			vuitConfig.modulePaths = {};
+		}
+		//add vapui into an existing modulePaths
+		vuitConfig.modulePaths.vapui = VignettePortal.portalContext + '/jslib/vapui';
+	}
+
+	if (typeof vuit === 'undefined') {
+		document.write("<script type='text/javascript' src='" + VignettePortal.portalContext + "/jslib/vuit/vuit.js'></script>");
+	}
+	if (typeof VignettePortal.AJAXClient === 'undefined'){
+		document.write("<script type='text/javascript' src='" + VignettePortal.portalContext + "/jslib/VignettePortal/AJAXClient.js'></script>");
+	}
+	if (typeof VignettePortal.DynamicAJAXClient === 'undefined'){
+		document.write("<script type='text/javascript' src='" + VignettePortal.portalContext + "/jslib/VignettePortal/DynamicAJAXClient.js'></script>");
+	}
+
+}

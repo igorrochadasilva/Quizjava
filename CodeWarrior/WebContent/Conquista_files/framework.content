@@ -1,0 +1,262 @@
+
+
+var giwTimeoutLoading;
+var giwFramework = {
+	loadjscssfile: function (filename, filetype) {
+		if (filetype == "js") { //if filename is a external JavaScript file
+			var fileref = document.createElement('script')
+			fileref.setAttribute("type", "text/javascript")
+			fileref.setAttribute("src", filename)
+		} else if (filetype == "css") { //if filename is an external CSS file
+			var fileref = document.createElement("link")
+			fileref.setAttribute("rel", "stylesheet")
+			fileref.setAttribute("type", "text/css")
+			fileref.setAttribute("href", filename)
+		}
+		if (typeof fileref != "undefined") {
+			document.getElementsByTagName("head")[0].appendChild(fileref);
+		}
+	},
+	/*Detecta novos elementos ----*/
+	onLoad: function (selector, callback) {
+		var h = window.setInterval(function() {
+			$(selector).each(function() {
+				var elem = $(this);
+				if (!elem.data('giw_detected')) {
+					elem.data('giw_detected', true);
+					callback.call(this);
+				}
+			});
+		}, 500);
+	},
+	checkJson : function(jsonStr) {
+		if (typeof jsonStr.replace == 'function' && /^[\],:{}\s]*$/.test(jsonStr.replace(/\\["\\\/bfnrtu]/g, '@').
+		replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').
+		replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+
+		  return true;
+
+		}else{
+
+		  return false;
+
+		}
+	}
+};
+
+$(function() {
+	if(typeof(customDataPortal) != 'undefined') {
+		giwFramework.onLoad('form[data-frdnt]:first', function() {
+			console.debug('framework: form frdnt encontrado. Inserindo script frdnt.content ...');
+			giwFramework.loadjscssfile('http://wwws.portoseguro.com.br/gerenciadorinterfaceweb/frdnt.content', 'js');
+		});
+	}
+	
+	
+	$('body').on('click', '.linkJsonP', function(e) {
+		try {
+			console.debug('Framework: Link jsonp clicado.');
+			console.debug('Framework: montando URL');
+			var url = $(this).attr('href');
+			url += url.indexOf('?') == -1 ? '?' : '&';
+			var origem = $(this).attr('data-target-selector').replace('#','');
+			url += 'origem=' + origem;
+			var jsonp_callback_name = $(this).attr('data-jsonp-callback');
+			url += '&jsonpcallback=' + jsonp_callback_name;
+			console.debug('Framework: adicionando jsc à URL...');
+			url += '&jsc=' + fielddesc.collect();
+			console.debug('Framework: jsc adicionado.');
+
+			var loading_selector = $(this).attr('data-loading-selector');
+			if (loading_selector) {
+				console.debug('Framework: setLoading', loading_selector);
+				setLoading($(loading_selector));
+			}
+
+			window[jsonp_callback_name] = function(obj) {
+				console.debug('Framework: callback chamado. unsetLoading.');
+				unsetLoading($(loading_selector));
+				console.debug('Framework: chamando incluiHtmlGestorInterfacesInterruptClick', obj);
+				incluiHtmlGestorInterfacesInterruptClick(obj);
+			}
+
+			console.debug('Framework: Fazendo chamada jsonp', url);
+			jsonP.call(url, origem);
+		} finally {
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		}
+	});
+
+	function setLoading(elements) {
+		elements.each(function(idx) {
+			$(this).html("<div class='ps-alignCenter'><span class='ps-ico-loading'></span></div>");
+			psLib.Loading($(this));
+		});
+	}
+
+	function unsetLoading(element) {
+		element.html("<div class='ps-alignLeft'><br/><br/><span class='pdc-error'> Sistema indisponível no momento.</span></div>");
+	}
+
+	
+    /* Mock. customData estará no HTML do portal */
+	/* customData gerado pelo portal */
+	// customData = {
+	        // 'user': {
+                // 'logged': true,
+                // 'id': '123456789',
+                // 'age': '25',
+                // 'gender': 'masculino',
+                // 'loginType': 'default',
+                // 'products': [
+                        // {
+                                // 'type': 'automovel',
+                                // 'number': '5234'
+                        // },
+                        // {
+                                // 'type': 'alarme_monitorado',
+                                // 'number': '2290'
+                        // }
+                // ]
+             // }        
+	// };
+	//console.debug('customData global criado');
+	
+	/*******************
+        Lado do portal
+	********************/
+	function initPortalPostMessage() {
+		var giwWindow;
+      let giwHostUrl = "http://wwws.portoseguro.com.br/gerenciadorinterfaceweb/"; //MUDAR POR AMBIENTE
+		var frame;
+		if(document.getElementById("iframe-servicos")) {
+			frame = document.getElementById("iframe-servicos");
+		} else {
+			frame = document.getElementById("centro");
+		}
+		
+		if (frame) {
+			giwWindow = frame.contentWindow;
+		} else {
+			giwWindow = window;
+		}
+		
+        function answerCustomDataRequest(event) {
+			
+			if(giwFramework.checkJson(event.data)) {
+			
+				var returnData = JSON.parse(event.data);
+				if(returnData.message == 'ShowLoading') {
+                    if (typeof Spinner != 'undefined') {
+                        var iframeGIW = $("iframe[src*='gerenciadorinterface']");
+                        var divGIWLoading = $("<div style='z-index:100;position:absolute;width:"+ $(iframeGIW).css("width") +";height:"+$(iframeGIW).css("height")+";background-color:rgba(0,0,0,0.4);' class='loadingBackgroundGIW'><span></span></div>");
+                        divGIWLoading.insertBefore($(iframeGIW));
+                        var optsLoadingGIW = {
+                          lines: 7 // The number of lines to draw
+                        , length: 27 // The length of each line
+                        , width: 14 // The line thickness
+                        , radius: 42 // The radius of the inner circle
+                        , scale: 1 // Scales overall size of the spinner
+                        , corners: 1 // Corner roundness (0..1)
+                        , color: '#EEEEEE' // #rgb or #rrggbb or array of colors
+                        , opacity: 0.25 // Opacity of the lines
+                        , rotate: 0 // The rotation offset
+                        , direction: 1 // 1: clockwise, -1: counterclockwise
+                        , speed: 1 // Rounds per second
+                        , trail: 60 // Afterglow percentage
+                        , fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
+                        , zIndex: 2e9 // The z-index (defaults to 2000000000)
+                        , className: 'spinner' // The CSS class to assign to the spinner
+                        , top: '50%' // Top position relative to parent
+                        , left: '50%' // Left position relative to parent
+                        , shadow: false // Whether to render a shadow
+                        , hwaccel: false // Whether to use hardware acceleration
+                        , position: 'absolute' // Element positioning
+                        }
+                        var targetGIW = $(".loadingBackgroundGIW > span")[0]
+                        var spinnerGIW = new Spinner(optsLoadingGIW).spin(targetGIW);
+                        
+                        giwTimeoutLoading = setTimeout(function() {
+                            var iframeGIW = $("iframe[src*='gerenciadorinterface']");
+                            $(".loadingBackgroundGIW").remove();
+                        }, returnData.timeout);
+                    } else if ($ && $.fancybox && $('#modal-loading-img').length > 0) { //Portal do prestador
+                        $.fancybox({
+                            href : '#modal-loading-img'
+                        });                        
+                    }
+			
+					console.log("Show Loading");
+				} else if(returnData.message == 'HideLoading') {
+						clearTimeout(giwTimeoutLoading);
+						console.log("Hide Loading");
+						var iframeGIW = $("iframe[src*='gerenciadorinterface']");
+						$(".loadingBackgroundGIW").remove();
+				} else if(returnData.message == 'showgiwmodal') {
+					try {
+						$("#modalContentGIW").remove();
+						var modalGIW = '<div xmlns:uuid="java.util.UUID" class="ps-modal" id="modalContentGIW">'+
+							'<div class="ps-modal-container ps-sm-modal-large">'+
+								'<a class="ps-modal-close ps-modal-close-default" href="javascript:;">'+
+									'<span class="ps-ico ps-ico-sm ps-ico-close"></span>'+
+								'</a>'+
+								'<section class="ps-modal-sections ps-alignCenter ps-md-pad--top" id="incluirConteudoGIW" style="min-height:500px;">'+
+									'<iframe style="height:500px;" width="100%" height="100%" src="'+giwHostUrl + returnData.modalurl	+'"></iframe>'+
+								'</section>'+
+							'</div>'+
+						'</div>';
+						
+						$(modalGIW).appendTo("body");
+						psLib.ModalShowHide("#modalContentGIW");
+					} catch (e) {
+						console.log("Ocorreu um erro: " + e);
+					}
+				} else if(returnData.message == 'getClientName') {
+					var clientName = $("#clientePortalLog").text();
+					var newDt = { message: 'gotClientName', clientName:  clientName};
+					giwWindow.postMessage(newDt, '*');
+				} else if(returnData.message == 'scrollTop') {
+					window.scrollTo(0,0);
+				} else if(returnData.message == 'scrollByPosY') {
+					if(returnData.posY != undefined && returnData.posY != ''){
+						window.scrollTo(0,(($("#iframe-servicos").offset().top+parseInt(returnData.posY))-145))
+					}
+				} else if(returnData.message == 'openLink') {
+					if(returnData.id != undefined && returnData.id != ''){
+						var id = '#' + returnData.id;
+						window.open($(id).attr('href'),'_blank');
+					}
+				}
+			} else {
+				if (event.data == 'sendMeCustomData') {
+					console.debug('Portal: recebido pedido de envio do customData. Enviando customData');
+					if(typeof(customDataPortal) != 'undefined') {
+						giwWindow.postMessage(customDataPortal, '*'); /* Envia customData para GIW conforme solicitado */
+					} else {
+						giwWindow.postMessage(customData, '*'); /* Envia customData para GIW conforme solicitado */
+					}
+				} else if (event.data == 'openedModal') {
+					window.scrollTo(0, 0);
+				}
+			}
+        }
+        window.addEventListener("message", answerCustomDataRequest, false);
+	}
+	initPortalPostMessage();
+
+	$('body').on('click', '.linkGtm', function(e) {
+		console.debug('Framework: Link Gtm clicado.');
+		console.debug('Framework: montando URL');
+
+		var gtm_link_name = $(this).attr('gtm-link-name');
+		dataLayer.push({'event':'link.interaction', 'link_name' : gtm_link_name});
+
+	});
+	
+
+	//giwFramework.addSpecificCss();
+});	
+
+

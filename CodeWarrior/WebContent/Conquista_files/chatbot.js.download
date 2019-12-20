@@ -1,0 +1,30 @@
+function validateLink(event, element){
+	
+	var clazz = $(element).find('span').attr('class');
+	
+	// Validação necessária para que esse evento não execute para outras chamadas além do chat
+	if(clazz.indexOf('chat') != -1){
+		chatBot(event, element);
+	}
+};
+
+function chatBot(event, element){
+	event.preventDefault();
+	
+	var nome = $('#nomeUsuario').val();
+	var cpf = $('#cpfUsuario').val();
+
+	var href = $(element).attr('href');
+	
+	if(href.indexOf('cpf=') == -1 && href.indexOf('nome=') == -1){
+		var url = href + '?cpf=' + cpf + '&nome=' + nome;
+		//href = href.replace(/(\')\w+(\:\/\/)[^\']+(\')/g, url);
+		$(element).attr('href', url);
+	} else{
+		var url = href.split('?')[0] + '?cpf=' + cpf + '&nome=' + nome;
+		$(element).attr('href', url);
+	}
+
+	var config='toolbar=yes,scrollbars=yes,resizable=yes,width=600,height=650';
+	window.open($(element).attr('href'), '_blank', config);
+};

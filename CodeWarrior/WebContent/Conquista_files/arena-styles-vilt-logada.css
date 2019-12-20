@@ -1,0 +1,17 @@
+.bulletEmBreveProduto {
+    float:right;
+    color:#33BFFF;
+    font-size:14px;
+    font-family:'Open Sans';
+    border:1px solid #33BFFF;
+    border-radius:2px;
+    letter-spacing:0px;
+    margin:0px;
+    padding:0px 2px 0px 2px;
+    line-spacing:24px;
+}
+
+.ps-menu-solucoes li .ps-title {
+    text-transform: initial;
+    letter-spacing: initial;
+}

@@ -1,0 +1,42 @@
+var loader = null;
+var viltScript = function() {
+    // Run if jquery exists.
+    if($){
+
+
+        // Add a custom "Em Breve" bullet to a product.
+        $('.ps-menu-solucoes').find("li").each(function(i,el){
+            if( $(el).find("a").attr("href").indexOf("/previdencia/home") > 0 ) {
+                $(el).find("a").append("<span class=\"bulletEmBreveProduto\">EM BREVE</span>");
+            }
+        });
+
+        // Menu: Set links active when a href="blablabla" are the same of the URL "blablabla" in browser.
+        $('.ps-arena-links-topo').find("li").each(function(i,el){
+            $(el).removeClass("active");
+            if(document.location.pathname==$(el).find("a").attr("href")){
+                $(el).addClass("active");
+            };
+        });
+
+
+        $("#solucoes-mobile").click(function(){
+            $(".ps-menu-solucoes").toggle()
+        });
+        
+
+        return true;
+    } else {
+        loader = window.setTimeout(viltScript,1000); // Try again if jquery not loaded yet.
+        return false;
+    }
+}
+window.onload = viltScript;
+
+$( window ).on("load", function() {
+    $('#loadingIframeCustom').fadeOut();
+    //$('#loadingIframeCustom').css('position','initial');
+    //Remover o espaço entre o iframe e o banner //
+    $('#geral main table').attr('cellspacing', '0px');
+    //Remover o espaço entre o iframe e o banner //
+});

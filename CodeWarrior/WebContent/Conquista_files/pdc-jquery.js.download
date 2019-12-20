@@ -1,0 +1,284 @@
+function showValue(e){
+	$(e).hide().parent().find('span').show();
+}
+$(document).ready(function() {
+	
+	$(".maskCpfCnpj").focusout(function() {
+	  var cpfcnpj, element;
+	  element = $(this);
+	  element.unmask();
+	  cpfcnpj = element.val().replace(/\D/g, '');
+	  if (cpfcnpj.length == 14) {
+		  element.mask("99.999.999/999?9-99");
+	  } else if(cpfcnpj.length == 11) {
+			  element.mask("999.999.999-99?999");
+	  } else {
+			  element.val("");
+			  element.mask("99999999999?999");
+	  }
+	});
+
+	$(".maskCpfCnpj").focusin(function() {
+	  var cpfcnpj, element;
+	  element = $(this);
+	  element.unmask();
+	  element.mask("99999999999?999");
+	});
+
+	$(".maskCpfCnpj").keydown(function(e) {
+	  var element = $(this);
+	  var cpfcnpj = element.val().replace(/\D/g, '');
+
+	  if (e.keyCode == 13) {
+			  if (cpfcnpj.length == 14) {
+					  element.unmask();
+					  element.mask("99.999.999/999?9-99");
+			  } else if(cpfcnpj.length == 11) {
+					  element.unmask();
+					  element.mask("999.999.999-99?999");
+			  } else {
+					  element.val("");
+					  element.unmask();
+					  element.mask("99999999999?999");
+			  }
+	  }
+	});
+
+	setTimeout(function() {
+		$('.load').hide();			
+		$('.pdc-board-box').show();
+	}, 800);
+
+	$(".menu-desktop").click(function(event) {
+		if ($('.menu-desktop').hasClass('fechado')){
+			$(".menu-desktop").removeClass('selected');
+			$(".wrap-menu-open").fadeOut();
+			$(".menu-desktop").removeClass('fechado');
+		}else{
+			$(".menu-desktop").addClass('fechado');
+			$(".wrap-menu-open").fadeIn();
+			$(".menu-desktop").addClass('selected');
+		}
+
+	});
+
+	$(".fechar-notification").click(function(event) {
+		$(".ps-txt-notification").hide();
+		$(".wrap-notification").slideUp();
+		
+		$(".wrap-alert").slideUp();
+	});
+
+	$(".bt-sair").click(function(){
+		$(".menu-desktop").removeClass('selected');
+		$(".menu-desktop").removeClass('fechado');
+		$(".wrap-menu-open").hide();
+	});
+
+	$(document).mouseup(function (e)
+	{
+		var container = $(".wrap-menu-open, .menu-desktop");
+	if (!container.is(e.target) // if the target of the click isn't the container...
+	&& container.has(e.target).length === 0) // ... nor a descendant of the container
+	{
+	$(".wrap-menu-open").hide();
+	$(".menu-desktop").removeClass('selected');
+	$(".menu-desktop").removeClass('fechado');
+	}
+	}); 
+
+	$('.menu-mobile').click(function () {
+		$('.wrap-menu-mobile').animate({
+			left: 0,
+			opacity: 1
+		}, 100, "easeOutQuint").slideDown( function() {
+			var alturapai = $('.wrap-menu-mobile div [data-menu-subnivel="0"]').height();
+			$('.altura-menu').css('height',alturapai + 80);
+		  });
+		$('.layer-bg').fadeIn();
+		$('.layer-bg').fadeIn();
+
+	});
+
+	$('[data-menu]').click(function () {
+		if ($(this).attr("data-menu") == "0") {
+			$(".header-menu").show();
+			$(".voltar-mobile").hide();
+		}
+		else {
+			$(".voltar-mobile").show();
+			$(".header-menu").hide();
+		}
+
+		$('.wrap-menu-mobile ul:not([data-menu-subnivel="' + $(this).attr("data-menu") + '"])').animate({
+			left: -150,
+			opacity: 0
+		}, 60, "easeOutQuint", function () {
+			$(this).css('z-index', 0);
+		});
+
+		$('[data-menu-subnivel="' + $(this).attr("data-menu") + '"]').animate({
+			left: 0,
+			opacity: 1
+		}, 450, "easeOutQuint", function () {
+			$(this).css('z-index', 9);
+		});
+	var alturapai = $('.wrap-menu-mobile div [data-menu-subnivel="' + $(this).attr("data-menu") + '"]').height();
+		$('.altura-menu').css('height',alturapai +80);
+	});
+
+
+
+
+	//        interação menu mobile
+	$(window).on("swipeleft", function (event) {
+		$('.wrap-menu-mobile nav').animate({
+			left: -150,
+			opacity: 0
+		}, 600, "easeOutQuint", function () {
+			$('.wrap-menu-mobile nav').slideUp();
+		});
+		$('.layer-bg').fadeOut();
+
+	});
+
+	$(".fechar-menu-mobile").click(function(event) {
+		$(".wrap-menu-mobile").slideUp();
+	});
+
+	$("#spanMostrarDetalhes").click(function(event) {
+		$(".masc-leave").slideDown();
+	});
+
+	$(".fechar-det-produtos-mobile").click(function(event) {
+		$(".masc-leave").slideUp();
+		$(".click-desktop-detalhes").removeClass('aberto');
+		$(".click-desktop-detalhes").removeClass('selected');
+	});
+
+	$(".click-desktop-detalhes").mouseover(function(event) {
+		if($("#spanMostrarDetalhes").css("display") != "none" || $("#documentos").length > 0){
+			$(".masc-leave").slideDown();
+		}
+	});
+
+	$(".masc-leave").mouseleave(function(event) {
+		if($("#spanMostrarDetalhes").css("display") != "none" || $("#documentos").length > 0){
+			$(".masc-leave").slideUp();
+		}
+	});
+
+
+	var windowSize = $(window).width();
+	if (windowSize <= 767) {
+		$(".exibir-faturas").click(function(event) {
+			$(this).siblings(".pdc-info-faturas").toggle();
+		});
+	}
+
+	$(".click-accordion").click(function(event) {
+
+		if ($(this).hasClass('aberto')){
+
+		$(this).siblings(".conteudo-accordion").slideUp(200);
+		$(this).removeClass('aberto');
+		$(this).children(".seta-accordion-interna").addClass('ps-ico-arrow-down').removeClass('ps-ico-arrow-up');
+
+		}else{
+			$(this).siblings(".conteudo-accordion").slideDown(200);
+			$(this).addClass('aberto');
+			$(this).children(".seta-accordion-interna").removeClass('ps-ico-arrow-down').addClass('ps-ico-arrow-up');
+		}
+	});
+
+
+	$(".menu-recolhido").click(function(event) {
+		if ($('.menu-recolhido').hasClass('fechado')){
+
+			$(".seta-clique").removeClass('ps-ico-arrow-right').addClass('ps-ico-arrow-left');
+			$(".seta-clique").removeClass('float-left').addClass('float-right');
+
+			$(".menu-sidebar").removeClass('ps-md-mod1').removeClass('ps-sm-mod1');
+			$(".menu-sidebar").addClass('ps-sm-mod3').addClass('ps-md-mod3');
+			$(".lista-menu-sidebar").show();
+			$(".tooltip-compartilhar").show();
+			
+			$(".content-dash12").removeClass('ps-md-mod11');
+			$(".content-dash12").addClass('ps-md-mod9');
+			$(".menu-recolhido").removeClass('fechado');
+			
+			$(".menu-sidebar .ps-heading-3").show(50);
+			
+		}else{
+			$(".menu-sidebar").removeClass('ps-sm-mod3').removeClass('ps-md-mod3');
+			$(".menu-sidebar").addClass('ps-md-mod1').addClass('ps-sm-mod1');
+			$(".lista-menu-sidebar").hide();
+			$(".tooltip-compartilhar").hide();
+			
+
+			$(".content-dash12").removeClass('ps-md-mod9');
+			$(".content-dash12").addClass('ps-md-mod11');
+			$(".menu-recolhido").addClass('fechado');
+			$(".seta-clique").removeClass('ps-ico-arrow-left').addClass('ps-ico-arrow-right').removeClass('float-right').addClass('float-left');
+			
+			$(".menu-sidebar .ps-heading-3").hide();
+		}
+	});
+
+	var tamanhoTela = $(window).width();
+	if (tamanhoTela >= 768) {
+
+	$.each($('.linha-corretor'), function(i, item){
+
+		item = $(item);
+		var item1Height = item.find('.item-fale-corretor-pg:first').height();
+		var item2Height = item.find('.item-fale-corretor-pg:last').height();
+
+		var maior = item1Height;
+
+		if(item2Height > maior) {
+			maior = item2Height;
+		}
+
+		item.find('.item-fale-corretor-pg').css('height', maior);
+
+	});
+	}
+
+	//script botao editar nome do plano - IMPORTANTE:no momento deixei os botoes de gravar e cancelar removendo os o input e o mesmos
+	$(".pdc-bt-editavel").click(function(event) {
+		$(".pdc-info-editavel, .pdc-bt-editavel").hide();
+		$(".pdc-input-cartao, .pdc-bt-gravar, .pdc-bt-cancelar").show();
+	});
+
+	$(".pdc-bt-gravar, .pdc-bt-cancelar").click(function(event) {
+		$(".pdc-info-editavel, .pdc-bt-editavel").show();
+		$(".pdc-input-cartao, .pdc-bt-gravar, .pdc-bt-cancelar").hide();
+	});
+
+	// Fix menu produto.
+	elproduto = $('ul.ps-nav--prim li.ps-nav__option[data-opcao="produtos"]');
+	if ( elproduto.length > 0 ) {
+		elproduto.show();	
+	};
+
+	// Fix Destaque para aparecer somente 1 vez.
+	fixModalDestaque();
+	
+});
+
+function fixModalDestaque() {
+	if($("#ModalLarge").length >= 1) {
+		if(getCookie("exibirDestaque") == undefined || getCookie("exibirDestaque") === ""){
+			$("#ModalLarge").css("visibility", "visible");
+			$("#ModalLarge").css("opacity", "100");
+			$("body").css("overflow","hidden");
+			document.cookie="exibirDestaque=false; path=/";
+		} else {
+			$("#ModalLarge").css("visibility", "hidden");
+			$("#ModalLarge").css("opacity", "0");
+			$("#ps-modal-blackdrop").hide(); // Fix-13-12-2018
+			$("body").css("overflow","auto");
+		};
+	};
+}

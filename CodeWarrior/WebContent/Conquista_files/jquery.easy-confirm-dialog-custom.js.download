@@ -1,0 +1,123 @@
+(function($) {
+  $.easyconfirm = { };
+  $.easyconfirm.locales = { };
+   
+	$.fn.easyconfirm = function(options) {
+	  var options = jQuery.extend({
+	    eventType: 'click',
+	    icon: 'help'
+	  }, options);
+	  
+	  var locale = jQuery.extend({}, $.easyconfirm.locales, options.locale);
+	  
+	  var width = 'auto';
+	  var height = 120;
+	  if (options.width != null && options.width > 0)
+		width = options.width;
+	  if (options.height != null && options.height > 0)
+		height = options.height;
+	  
+	  
+	  // Shortcut to eventType.
+	  var type = options.eventType;
+	  
+	  return this.each(function() {
+	    var target = this;
+	    var $target = jQuery(target);
+    
+      // If no events present then and if there is a valid url, then trigger url change
+	    var urlClick = function() {
+	      if (target.href) {
+	        var length = String(target.href).length;
+	        if (target.href.substring(length-1,length) != '#')
+	          document.location = target.href;
+	      }
+	    }
+    
+	    // If any handlers where bind before triggering, lets save them and add them later
+	    var saveHandlers = function() {
+	      var events = jQuery.data(target, 'events');
+	      if (events) {        
+	        target._handlers = new Array();
+	        for (var i in events[type]) {
+	          target._handlers.push(events[type][i]);
+	        }
+      
+	        $target.unbind(type); 
+	      }
+	    }
+	    // Re-bind old events
+	    var rebindHandlers = function() {
+	      if (target._handlers != undefined) {
+	        jQuery.each(target._handlers, function() {
+	          $target.bind(type, this);
+	        });
+	      }
+	    }
+      
+	    if ($target.attr('title').length > 0)
+        locale.text = $target.attr('title');
+      
+      var dialog = (options.dialog == undefined || typeof(options.dialog) != 'object') ? 
+                     $('<div class="dialog confirm">'+ locale.text +'</div>'):
+                     options.dialog;
+      
+      var buttons = { };
+	  
+	   buttons[locale.button[0]] = function() { 
+        $(dialog).dialog("close"); };
+	  
+      buttons[locale.button[1]] = function() { 
+        // Unbind overriding handler and let default actions pass through
+        $target.unbind(type, handler);
+      
+        // Close dialog
+        $(dialog).dialog("close");
+      
+        // Check if there is any events on the target
+        if (jQuery.data(target, 'events')) {                           
+          // Trigger click event.
+          $target.click();                                      
+        } else {
+          // No event trigger new url
+          urlClick();
+        }
+      
+        init();
+
+      };
+
+      
+	    $(dialog).dialog({ autoOpen: false,
+			                   resizable: true,
+	                       draggable: true,
+	                       closeOnEscape: true,
+	                       width: width,
+	                       height: height,
+	                       minHeight: 120,
+	                       maxHeight: 200,
+	                       buttons: buttons,
+	                       title: locale.title,
+	                       closeText: locale.closeText,
+	                       modal: true});
+    
+	    // Handler that will override all other actions
+	    var handler = function(event) {
+	      $(dialog).dialog('open');
+	      event.stopImmediatePropagation();
+	      event.preventDefault();
+	      return false;
+	    }
+    
+	    var init = function() { 
+	      saveHandlers();
+	      $target.bind(type, handler);
+	      rebindHandlers();
+	    }
+    
+	    init();
+
+	  });
+  
+	}
+})(jQuery);

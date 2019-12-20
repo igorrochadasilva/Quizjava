@@ -1,0 +1,71 @@
+/**
+ * portletPDC.js
+ *
+ * Includes prefs.js and custom logic for this
+ *
+ * @license Copyright 2017 - Porto Seguro Cia de Seguros
+ * @author VILT Group - https://vilt-group.com
+ * @created 2018-05-21
+ * 
+ * CHANGE LOG
+ * =============================================================================
+ * - Author: Yuri Cordeiro
+ * - Date: 2017-05-21
+ * - Changes:
+ * -- File creation and first logic
+ */
+
+// Backward compatibility functions
+function apresentarPortlet(){}
+function apresentarPortletAjax(){}
+function envia(){}
+
+// Creates a new function to retrieve a script in with cache
+(function($){$.getScriptCached=function(url,callback){return $.ajax({url:url,dataType:"script",cache:true}).done(callback)}})(jQuery);
+
+// Loads prefs.js
+$.getScriptCached('/static-files/PortalCliente/js/app/prefs.js', function(){
+	
+		/**
+         * Removes any previous elements created like this
+        **/
+        if( $('input[name="user_prefs"]').length >= 1 ){
+            $('input[name="user_prefs"]').remove();
+        }
+
+        if( $('input[name="hidden_prefs"]').length >= 1 ){
+            $('input[name="hidden_prefs"]').remove();
+        }
+
+        if( $('input[name="user_ip"]').length >= 1 ){
+            $('input[name="user_ip"]').remove();
+        }
+
+        /**
+         * Creates the prefs element and appends to form
+         */
+        var $userPrefsInput = $('<input>').attr( { type: 'hidden', id: 'user_prefs', name: 'user_prefs' } );
+        var $userPrefsInput2 = $('<input>').attr( { type: 'hidden', id: 'user_prefs2', name: 'user_prefs2' } );
+
+        $('form').each(function(){
+            $(this).append( $userPrefsInput );
+            $(this).append( $userPrefsInput2 );
+        });
+
+        /**
+         * Function to run after page load
+         */
+        fielddesc.initiate(null);
+
+        /**
+         * Overload document submit
+         */
+        $(document).submit(function(){
+            fielddesc.collect('user_prefs');
+			$('form').append('<input type="hidden" name="user_prefs" id="user_prefs" value="'+$('#user_prefs').val()+'">');
+			$('form').append('<input type="hidden" name="user_prefs2" id="user_prefs2" value="'+$('#user_prefs2').val()+'">');
+        });
+
+});
+
+

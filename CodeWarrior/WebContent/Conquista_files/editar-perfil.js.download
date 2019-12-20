@@ -1,0 +1,288 @@
+function changeAreaModal(btnClicado, areaAtual, areaProxima) {
+    function transicaoArea() {
+        $(areaAtual).hide();
+        $(areaProxima).show("slide", {
+            direction: "left"
+        }, 200);
+    }
+    if (!$(btnClicado).hasClass("ps-frm-validate")) {
+        transicaoArea();
+    } else {
+        if ($(areaAtual).find("input, select, .ps-frm-select").hasClass("ps-frm-error")) {
+            return false;
+        } else {
+            transicaoArea();
+        }
+    }
+}
+
+function isEmail(email) {
+    var regex = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    if(!regex.test(email)) {
+        return false;
+    }else{
+        return true;
+    }
+}
+
+
+function abriuModalLogin() {
+    $("#dadosAcesso").find("input, select, .ps-frm-select, label").removeClass("ps-frm-error ps-frm-lbl-focus").val("");
+}
+
+
+function bindEvent(element, eventName, eventHandler) {
+    if (element.addEventListener){
+        element.addEventListener(eventName, eventHandler, false);
+    } else if (element.attachEvent) {
+        element.attachEvent('on' + eventName, eventHandler);
+    }
+}
+$(document).ready(function() {
+
+    $("#dadosAcessoModal .ps-modal-close").click(function () {
+        $("#dadosAcessoModal .autenticarUsuarioItem:visible").hide();
+        $("#modalDadosAcesso").fadeIn("slow");
+    });
+
+    /*PROCESSO DE ENVIO DE E-MAIL*/
+    $('#btnAlterarEmailContinuar').click(function(){
+        var email = $('#novoEmail').val();
+        if(isEmail(email)){
+            var url = $("#actionUrlAltEmail").val();
+            var mapValue = {"email": email};
+
+            var html = criandoForm(url, mapValue);
+
+            new VignettePortal.AJAXClient().sendForm(html, callbackAltEmail);
+        } else {
+            $("input[name='novoEmail']").addClass("ps-frm-error");
+            psLib.NotifyShowHide("alert:Formato de E-mail inválido.");
+        }
+    });
+    /*FINAL PROCESSO DE ENVIO DE E-MAIL*/
+
+
+    /*PROCESSO DE ENVIO DE TELEFONE*/
+    $('#btnAlterarTelefoneContinuar').click(function(){
+
+        var telefone = $('#novoTelefone').val();
+
+        if(telefone.length === 16 || telefone.length === 15){
+
+            // separa o ddd do celular
+            var removeParentesesTelefone = telefone.replace(/\D/g, '');
+            var removeSeparadorTelefone = removeParentesesTelefone.replace("-", "").replace(".", "");
+            var removeEspacoTelefone = removeSeparadorTelefone.replace(" ", "");
+            var dddTelefone = removeParentesesTelefone.substring(0, 2);
+            var numeroTelefone = removeEspacoTelefone.substring(2, 15);
+
+            var url = $("#actionUrlAltTelefone").val();
+            var mapValue = {"ddd": dddTelefone, "numero": numeroTelefone};
+
+            var html = criandoForm(url, mapValue);
+
+            new VignettePortal.AJAXClient().sendForm(html, callbackAltTelefone);
+        } else {
+            $("input[name='novoTelefone']").addClass("ps-frm-error");
+            psLib.NotifyShowHide("alert:Formato de Telefone inválido.");
+        }
+    });
+    /*FINAL PROCESSO DE ENVIO DE TELEFONE*/
+
+
+    /*PROCESSO DE VALIDAR SENHA*/
+    $("#modalAlterarSenha1 #btnSenhaContinuar").click(function () {
+        var senhaAtual = $('#senhaAtual').val();
+        var cpfCnpj = $.cookie('cpf');
+
+        if(senhaAtual === ''){
+            $("input[name='senhaAtual']").addClass("ps-frm-error");
+            psLib.NotifyShowHide("alert:Campo senha não pode ser vazio.");
+            return;
+        }
+
+        var url = $("#actionUrlValSenha").val();
+        var mapValue = {"senha": senhaAtual};
+
+        var html = criandoForm(url, mapValue);
+
+        new VignettePortal.AJAXClient().sendForm(html, callbackValSenha);
+    });
+    /*FINAL PROCESSO DE VALIDAR SENHA*/
+
+    /*PROCESSO DE ENVIO DE SENHA*/
+    $('#btnAlterarSenhaConcluir').click(function(){
+        var novaSenha = $('#novaSenha').val();
+        var senhaAtual = $('#senhaConfirmada').val();
+
+        var cpfCnpj = $.cookie('cpf');
+
+        if(senhaAtual === '' || novaSenha === ''){
+            $("input[name='senhaConfirmada']").addClass("ps-frm-error");
+            psLib.NotifyShowHide('alert:As senhas devem ser preenchidas');
+            return;
+        }
+
+        if(senhaAtual !== novaSenha){
+            $("input[name='senhaConfirmada']").addClass("ps-frm-error");
+            psLib.NotifyShowHide('alert:As senhas devem ser iguais');
+            return;
+        }
+
+        var url = $("#actionUrlAltSenha").val();
+        var mapValue = {"password": senhaAtual};
+
+        var html = criandoForm(url, mapValue,);
+
+        new VignettePortal.AJAXClient().sendForm(html, callbackAltSenha);
+
+    });
+    /*FINAL PROCESSO DE ENVIO DE SENHA*/
+
+    /* ALTERAR SENHA */
+    $("#modalDadosAcesso #btn-alterarSenha").click(function () {
+        changeAreaModal(this, "#modalDadosAcesso", "#modalAlterarSenha1");
+    });
+
+    $("input[name=senha]").change(function () {
+        $(this).parents(".ps-row").find(".ps-ico").hide();
+        var senhaVal = $(this).val();
+        var senhaValNum = [];
+        var senhaValNaN = [];
+        senhaVal = senhaVal.split("");
+
+        for (i = 0; senhaVal.length > i; i++) {
+            if ($.isNumeric(senhaVal[i])) {
+                senhaValNum.push(senhaVal[i]);
+            } else {
+                senhaValNaN.push(senhaVal[i]);
+            }
+        }
+        if (senhaVal.length < 8 || senhaValNum.length < 2 || senhaValNaN.length < 2) {
+            $(this).parents(".ps-row").find(".ps-ico-close-rounded").stop().fadeIn();
+            $(this).addClass("ps-frm-error");
+        } else {
+            $(this).parents(".ps-row").find(".ps-ico-check").stop().fadeIn();
+        }
+    });
+
+    $("input[name=senhaConfirma]").change(function () {
+        $(this).parents(".ps-row").find(".ps-ico").hide();
+        var senhaVal = $("input[name=senha]").val();
+        var senhaConfirmaVal = $(this).val();
+        if (senhaVal == senhaConfirmaVal) {
+            $(this).parents(".ps-row").find(".ps-ico-check").stop().fadeIn();
+        } else {
+            $(this).parents(".ps-row").find(".ps-ico-close-rounded").stop().fadeIn();
+            $(this).addClass("ps-frm-error");
+        }
+    });
+
+    $("input[name=senhaConfirma]").keyup(function () {
+        $(this).parents(".ps-row").find(".ps-ico").hide();
+        var senhaVal = $("input[name=senha]").val();
+        var senhaConfirmaVal = $(this).val();
+        if (senhaConfirmaVal.length >= senhaVal.length) {
+            if (senhaVal == senhaConfirmaVal) {
+                $(this).parents(".ps-row").find(".ps-ico-check").stop().fadeIn();
+            } else {
+                $(this).parents(".ps-row").find(".ps-ico-close-rounded").stop().fadeIn();
+                $(this).addClass("ps-frm-error");
+            }
+        }
+    });
+
+    $("input[name=senha], input[name=senhaConfirma]").keyup(function () {
+        $(this).removeClass("ps-frm-error");
+    });
+    /* FIM ALTERAR SENHA*/
+
+
+    /* ALTERAR E-MAIL */
+    $("#modalDadosAcesso #btn-alterarEmail").click(function () {
+        changeAreaModal(this, "#modalDadosAcesso", "#modalAlterarEmail1");
+    });
+    /* FIM ALTERAR E-MAIL*/
+
+
+    /* ALTERAR TELEFONE */
+    $("#modalDadosAcesso #btn-alterarTelefone").click(function () {
+        changeAreaModal(this, "#modalDadosAcesso", "#modalAlterarTelefone1");
+    });
+    /* FIM ALTERAR TELEFONE*/
+
+
+    function callbackAltEmail(request){
+            var response = request.responseText;
+            response = response.trim();
+
+            if(response.includes("[OK]")){
+            $("input[name='novoEmail']").removeClass("ps-frm-error");
+                changeAreaModal(this, "#modalAlterarEmail1", "#modalSucesso");
+            } else{
+                if(response.indexOf("table") == 1 && $(response).find(".epi-dim").text() !== ""){
+                    response = $(response).find(".epi-dim").text().trim();
+                }
+
+                changeAreaModal(this, "#modalAlterarEmail1", "#modalErro");
+                psLib.NotifyShowHide('alert:'+response);
+            }
+         }
+
+    function callbackAltTelefone(request){
+        var response = request.responseText;
+        response = response.trim();
+        if(response.includes("[OK]")){
+            changeAreaModal(this, "#modalAlterarTelefone1", "#modalSucesso");
+        } else{
+            if(response.indexOf("table") == 1 && $(response).find(".epi-dim").text() !== ""){
+                response = $(response).find(".epi-dim").text().trim();
+            }
+
+            changeAreaModal(this, "#modalAlterarTelefone1", "#modalErro");
+            psLib.NotifyShowHide('alert:'+response);
+        }
+     }
+
+    function callbackAltSenha(request) {
+        var response = request.responseText;
+        response = response.trim();
+        if(response.includes("[OK]")){
+            changeAreaModal(this, "#modalAlterarSenha2", "#modalSucesso");
+        } else{
+            if(response.indexOf("table") == 1 && $(response).find(".epi-dim").text() !== ""){
+                response = $(response).find(".epi-dim").text().trim();
+            }
+
+            changeAreaModal(this, "#modalAlterarSenha2", "#modalErro");
+            psLib.NotifyShowHide('alert:'+response);
+        }
+    }
+
+    function callbackValSenha(request) {
+        var response = request.responseText;
+        response = response.trim();
+        if(response.includes("[OK]")){
+            $("input[name='senhaAtual']").removeClass("ps-frm-error");
+            changeAreaModal(this, "#modalAlterarSenha1", "#modalAlterarSenha2");
+        } else{
+            if(response.indexOf("table") == 1 && $(response).find(".epi-dim").text() !== ""){
+                response = $(response).find(".epi-dim").text().trim();
+            }
+
+            $("input[name='senhaAtual']").addClass("ps-frm-error");
+            psLib.NotifyShowHide("alert:"+response);
+        }
+    }
+
+
+        function criandoForm(url, mapValue){
+            var input = "";
+            $.each(mapValue, function(key, value){
+                input = input + "<input type='hidden' id='" + key + "' name='" + key + "' value='" + value + "'>";
+            });
+            var html =  "<form method='post' action='" + url + "'>" + input + "</form>";
+            return $(html)[0];
+    }
+});

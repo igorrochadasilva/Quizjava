@@ -1,0 +1,675 @@
+var windowW;
+
+// Get IE or Edge browser version
+var iExplorer = detectIE();
+
+function detectIE() {
+    var ua = window.navigator.userAgent;
+
+    var msie = ua.indexOf('MSIE ');
+    if (msie > 0) {
+        // IE 10 or older => return version number
+        return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+    }
+
+    var trident = ua.indexOf('Trident/');
+    if (trident > 0) {
+        // IE 11 => return version number
+        var rv = ua.indexOf('rv:');
+        return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+    }
+
+    return false;
+}
+// END Get IE or Edge browser version
+
+/* FUNÇÃO PARA APLICAR FORMATO MONETÁRIO A VALORES NUMÉRICOS */
+function toCurrency() {
+    $(".formatoMonetario").each(function () {
+        if ($(this).is("input[type='text']")) {
+            var valor = $(this).val();
+            if(valor != '' || valor != undefined){
+              $(this).val(parseFloat(valor).toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
+              }));
+            }
+
+        } else {
+            var valor = $(this).text();
+            if(valor != '' || valor != undefined){
+              $(this).text(parseFloat(valor).toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
+              }));
+            }
+
+        }
+    });
+};
+
+function singleCurrency(elemento) {
+    if ($(elemento).is("input[type='text']")) {
+        var valor = $(elemento).val();
+        return $(elemento).val(parseFloat(valor).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }));
+    } else {
+        var valor = $(elemento).text();
+        return $(elemento).text(parseFloat(valor).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }));
+    }
+}
+
+/* CORRIGE ALTURA ITENS NO CAROUSEL  */
+function ajustaCards(escopo) {
+    $(escopo + " .ps-carousel .slick-slide").height("auto");
+    var alturasArray = [];
+    $(escopo + " .ps-carousel .slick-slide").each(function () {
+        alturasArray.push($(this).height());
+    });
+    var valorMaior = Math.max.apply(Math, alturasArray);
+    $(escopo + " .ps-carousel .slick-slide").height(valorMaior);
+}
+/* end CORRIGE ALTURA ITENS NO CAROUSEL  */
+
+//////// SCRIPTS TOPO GERAL /////////
+function applyHeaderMobile(value) {
+
+    if (value <= 989) {
+        $(".ps-arena-notifications").appendTo(".ps-main-menu > .ps-container");
+        $(".ps-main-menu .ps-logo").appendTo(".ps-main-menu > .ps-container");
+    } else {
+        $(".ps-arena-notifications").appendTo(".ps-arena-links-topo");
+        $(".ps-main-menu .ps-logo").prependTo(".ps-main-menu .ps-topo-left");
+    }
+}
+
+$(".ps-main-menu .ps-show-search-input").click(function () {
+    $(".ps-main-menu .ps-arena-search").addClass("ps-arena-search-active");
+    $("#ps-arena-search-input").focus();
+});
+
+$("#ps-arena-search-input").blur(function () {
+    if ($(this).val() == "" || $(this).val() == undefined) {
+        $(".ps-main-menu .ps-arena-search").removeClass("ps-arena-search-active");
+    }
+});
+
+$(".ps-mobile-menu .ps-show-search-input").click(function () {
+    $(".ps-mobile-menu .ps-arena-search").addClass("ps-arena-search-active");
+    $("#ps-arena-search-input2").focus();
+});
+
+$("#ps-arena-search-input2").focus(function () {
+    $(".ps-mobile-menu .ps-arena-search").addClass("ps-arena-search-active");
+});
+
+$("#ps-arena-search-input2").blur(function () {
+    if ($(this).val() == "" || $(this).val() == undefined) {
+        $(".ps-mobile-menu .ps-arena-search").removeClass("ps-arena-search-active");
+    }
+});
+
+$(document).on("click", ".ps-arena-notifications > a", function () {
+    windowW = $(window).innerWidth();
+    $(".ps-arena-notifications-menu").toggleClass("ps-arena-notifications-menu-active");
+    if (windowW <= 989) {
+        $(this).parents("#ps-topo-arena").css({
+            "height": "100%",
+            "position": "fixed"
+        });
+        $("body,html").addClass("ps-modal-backdrop-visible");
+    }
+});
+$(".ps-arena-notifications-menu").click(function () {
+    $(".ps-arena-notifications-menu").removeClass("ps-arena-notifications-menu-active");
+    $(this).parents("#ps-topo-arena").css({
+        "height": "",
+        "position": ""
+    });
+    //$("body,html").removeClass("ps-modal-backdrop-visible");
+});
+$(".ps-arena-notifications-menu").mouseleave(function () {
+    $(".ps-arena-notifications-menu").removeClass("ps-arena-notifications-menu-active");
+});
+
+$(document).on("click", "#link-solucoes > a", function () {
+    $(".ps-menu-solucoes").toggleClass("ps-menu-solucoes-active");
+});
+$(".ps-menu-solucoes").click(function () {
+    $(".ps-menu-solucoes").removeClass("ps-menu-solucoes-active");
+});
+$(".ps-menu-solucoes").mouseleave(function () {
+    $(".ps-menu-solucoes").removeClass("ps-menu-solucoes-active");
+});
+
+$(document).mouseleave(function () {
+    $(".ps-arena-notifications-menu").removeClass("ps-arena-notifications-menu-active");
+    $(".ps-menu-solucoes").removeClass("ps-menu-solucoes-active");
+});
+
+$(".ps-modal-close-alt").click(function () {
+    psLib.ModalShowHide("#ModalSair");
+});
+
+$(".ps-burger-menu").click(function () {
+    $(".ps-mobile-menu").addClass("ps-mobile-menu-active").parents("#ps-topo-arena").css({
+        "height": "100%",
+        "position": "fixed"
+    });
+    $("body,html").addClass("ps-modal-backdrop-visible");
+});
+
+$(".ps-mobile-menu .ps-ico-close").click(function () {
+    $(".ps-mobile-menu").removeClass("ps-mobile-menu-active").parents("#ps-topo-arena").css({
+        "height": "",
+        "position": ""
+    });
+    $("body,html").removeClass("ps-modal-backdrop-visible");
+});
+
+var lastScrollTop = 0;
+
+function headerScroll(headerH) {
+    var st = $(this).scrollTop();
+
+    if ($(window).innerWidth() >= 990) {
+        if (st > lastScrollTop) {
+            // downscrolling code
+            $("#ps-topo-arena").addClass("fixedTop");
+            $(".ps-menu-solucoes").removeClass("ps-menu-solucoes-active");
+            $(".ps-arena-notifications-menu").removeClass("ps-arena-notifications-menu-active");
+            $("#ps-topo-arena").removeClass("fixedTopPlus");
+            $(".ps-arena").css({
+                "margin-top": headerH
+            });
+        } else if (st == lastScrollTop) {
+            // upscrolled code
+            $("#ps-topo-arena").removeClass("fixedTop fixedTopPlus");
+            $(".ps-arena").css({
+                "margin-top": 0
+            });
+            lastScrollTop = 0;
+        } else {
+            // upscrolling code
+            $("#ps-topo-arena").addClass("fixedTopPlus");
+            $(".ps-menu-solucoes").removeClass("ps-menu-solucoes-active");
+            $(".ps-arena-notifications-menu").removeClass("ps-arena-notifications-menu-active");
+        }
+        lastScrollTop = st;
+    } else {
+        if (st > lastScrollTop) {
+            // downscrolling code
+            if (!$("body").hasClass("ps-modal-backdrop-visible")) {
+                $("#ps-topo-arena").addClass("fixedTop");
+                $(".ps-arena").css({
+                    "margin-top": headerH
+                });
+            }
+        } else {
+            // upscrolled code
+            $("#ps-topo-arena").removeClass("fixedTop");
+            $(".ps-arena").css({
+                "margin-top": 0
+            });
+            lastScrollTop = 0;
+        }
+    }
+}
+
+///////// END SCRIPTS TOPO GERAL /////////
+
+/* SIMPLE ACCORDION */
+
+$(".ps-simple-accordion-wrap").on("click", ".ps-simple-accordion-header", function () {
+    var esteAccordion = $(this).parents(".ps-simple-accordion");
+    if ($(esteAccordion).hasClass("ps-simple-accordion-opened")) {
+        $(esteAccordion).find(".ps-simple-accordion-content").stop().slideUp(function () {
+            $(esteAccordion).removeClass("ps-simple-accordion-opened").find(".ps-ico-arrow-up").toggleClass("ps-ico-arrow-up ps-ico-arrow-down");
+        });
+    } else {
+        $(esteAccordion).find(".ps-simple-accordion-content").stop().slideDown(function () {
+            $(esteAccordion).addClass("ps-simple-accordion-opened").find(".ps-ico-arrow-down").toggleClass("ps-ico-arrow-down ps-ico-arrow-up");
+        });
+    }
+    psLib.ReInit(['Carousel']);
+});
+
+function toggleAccordionMobile(value) {
+    if (value >= 990) {
+        $(".ps-simple-accordion-mobile .ps-simple-accordion-content").show();
+        $(".ps-simple-accordion-mobile header").removeClass("ps-simple-accordion-header");
+    } else {
+        $(".ps-simple-accordion-mobile header").addClass("ps-simple-accordion-header");
+        $(".ps-simple-accordion-mobile").not(".ps-simple-accordion-opened").find(".ps-simple-accordion-content").hide();
+    }
+}
+
+/* end SIMPLE ACCORDION */
+
+/* BOTÕES ESQUERDA COM CONTEUDO DIREITA */
+function changeBtnLeftNav(value) {
+    if (value <= 989) {
+        var widthBtnPlus = $(".ps-left-block-plus").outerWidth() + parseFloat($(".ps-left-block-plus").css("margin")) * 2,
+            lengthBtnLeft = $("li.ps-left-block").length,
+            widthBtnLeft = $("li.ps-left-block").outerWidth() + parseFloat($("li.ps-left-block").css("margin")) * 2;
+
+        if ($(".ps-left-block-plus").length === 0) {
+            widthBtnPlus = 0;
+        }
+
+        var widthTotalNav = widthBtnLeft * lengthBtnLeft + widthBtnPlus;
+
+        $(".ps-left-block-nav").width(widthTotalNav);
+        $(".ps-left-block-nav ul").width(widthTotalNav - widthBtnPlus);
+    } else {
+        $(".ps-left-block-nav ul, .ps-left-block-nav").width("auto");
+    }
+}
+
+/* end BOTÕES ESQUERDA COM CONTEUDO DIREITA */
+
+/* APPEND ASIDE */
+function appendAside(value) {
+    var principalRow = $(".ps-left-block-nav-wrap").parents(".ps-row");
+    if (value <= 989) {
+        $("aside.ps-sidebar-content").prependTo(principalRow);
+    } else {
+        $("aside.ps-sidebar-content").appendTo(principalRow);
+        $(".ps-simple-accordion-mobile .ps-simple-accordion-content").show();
+    }
+}
+/* end APPEND ASIDE */
+
+/* MINI POPOVERS DE SLIDERS Z-INDEX TOGGLE */
+$(".ps-mini-popover").click(function () {
+    $(".ps-mini-popover").removeClass("ps-mini-popover-active");
+    $(this).toggleClass("ps-mini-popover-active");
+});
+/* END MINI POPOVERS DE SLIDERS Z-INDEX TOGGLE */
+
+// ARRAY NUMERICA RANDOM
+for (var a = [], i = 0; i < 10; ++i) {
+    a[i] = i;
+}function shuffle(array) {
+    var tmp,
+        current,
+        top = array.length;
+    if (top) while (--top) {
+        current = Math.floor(Math.random() * (top + 1));
+        tmp = array[current];
+        array[current] = array[top];
+        array[top] = tmp;
+    }
+    return array;
+}
+var arrTotal = shuffle(a);
+
+function chunks(arr, size) {
+    size = 2;
+    return arr.map(function (x, i) {
+        return i % size == 0 && arr.slice(i, i + size);
+    }).filter(function (x) {
+        return x;
+    });
+}
+arrTotal = chunks(arrTotal);
+// end ARRAY NUMERICA RANDOM
+
+// JQuery Trigger Event on Show/Hide of Element
+(function ($) {
+    $.each(['show', 'hide'], function (i, ev) {
+        var el = $.fn[ev];
+        $.fn[ev] = function () {
+            this.trigger(ev);
+            return el.apply(this, arguments);
+        };
+    });
+})(jQuery);
+//  end JQuery Trigger Event on Show/Hide of Element
+
+// SMOOTH SCROLL
+var actualScroll = 0;
+var nextScroll = "";
+var lastScroll = "";
+var smoothingScroll = 60;
+
+$(window).scroll(function(){
+  actualScroll = $(this).scrollTop()
+})
+$("#areaAccordion .ps-panel").on("click",function(e){
+  nextScroll = $(this).position().top;
+  // if(nextScroll != lastScroll){
+    // var scrollThis = $(this).attr("href");
+    var scrollThisPos = $(this).position().top;
+    lastScroll = scrollThisPos;
+    e.preventDefault();
+    if(scrollThisPos > actualScroll){
+      smoothingScroll = 70
+    }else{
+      smoothingScroll = 0
+    }
+    $("html, body").animate({
+        scrollTop: scrollThisPos + smoothingScroll
+    }, 500);
+  // }
+})
+
+// $(".ps-btn-scroll").click(function (e) {
+//     var scrollThis = $(this).attr("href");
+//     var scrollThisPos = $(scrollThis).position().top;
+//     e.preventDefault();
+//     $("html, body").animate({
+//         scrollTop: scrollThisPos
+//     }, 500);
+// });
+// end SMOOTH SCROLL
+
+// ADD FOCUS EM LABEL DE INPUT PRÉ-PREENCHIDO
+function addFocusLbl() {
+    var el = $("input:disabled");
+    $(el).each(function () {
+        if ($(this).val().length > 0) {
+            $(this).siblings("label").addClass("ps-frm-lbl-focus");
+        }
+    });
+}
+// end ADD FOCUS EM LABEL DE INPUT PRÉ-PREENCHIDO
+
+// CORREÇÕES BUG IOS COM IFRAMES EM MODAIS
+
+function ajustaIframeModal() {
+    var alturaTitle = $(".ps-modal-visible.ps-modal-iframe .ps-modal-title").outerHeight(),
+        alturaIframe = $('.ps-modal-visible.ps-modal-iframe iframe').contents().height(),
+        alturaModalContainer = $(".ps-modal-visible.ps-modal-iframe .ps-modal-container").height();
+
+    if (psLib.IsMobile) {
+        $("html").addClass("ps-modal-backdrop-visible");
+        $(".ps-modal-iframe.ps-modal-visible iframe").attr("scrolling", "no");
+        $('.ps-modal-visible.ps-modal-iframe iframe').height(alturaIframe);
+        $(".ps-modal-content").css("max-height", "none");
+    } else {
+        $(".ps-modal-visible.ps-modal-iframe").find(".ps-modal-container").css("overflow", "hidden").find(".ps-modal-title").addClass("ps-modal-title-fixed");
+        $('.ps-modal-visible.ps-modal-iframe iframe').height(alturaModalContainer - alturaTitle).css("margin-top", alturaTitle);
+    }
+}
+
+function alturaContentToIframe() {
+    if (psLib.IsMobile) {
+        var altWindow = $("main").height();
+        window.parent.document.querySelector(".ps-modal-visible.ps-modal-iframe iframe").style.height = altWindow + 'px';
+    }
+}
+
+function resolveAutofill() {
+    $(".ps-frm-entry").attr("autocomplete", "off");
+    $("input[type='text']:-webkit-autofill").each(function () {
+        var labelHolder = $(this).siblings(".ps-frm-lbl-internal").text();
+        $(this).attr("placeholder", labelHolder).siblings(".ps-frm-lbl-internal").addClass("ps-frm-lbl-focus");
+    });
+}
+
+$(".ps-open-modal").click(function () {
+    setTimeout(function () {
+        ajustaIframeModal();
+    }, 200);
+});
+
+$(".ps-modal .ps-ico-close, .ps-modal-close-alt").click(function () {
+    $("body").css("position", "");
+    $("html").removeClass("ps-modal-backdrop-visible");
+    $('.ps-modal-visible.ps-modal-iframe iframe').attr("style", "");
+});
+
+// end CORREÇÕES BUG IOS COM IFRAMES EM MODAIS
+
+
+function modalOverVisible() {
+    $(".vanilla-popover").each(function () {
+        $(this).parents(".ps-modal-container").css("overflow", "visible");
+    });
+}
+
+function scrollRightCtt() {
+    $("li.ps-left-block").click(function () {
+        if (!$(this).hasClass("ps-left-block-active")) {
+            $(".ps-left-block").removeClass("ps-left-block-active");
+            $(this).addClass("ps-left-block-active");
+            var esteBotao = $(this).attr("data-posicao");
+            $(".ps-right-content-wrap .ps-right-content").fadeOut("fast").removeClass("ps-right-content-active");
+            $(".ps-right-content-wrap .ps-right-content[data-posicao='" + esteBotao + "']").fadeIn(1000).addClass("ps-right-content-active");
+            $("body, html").animate({
+                scrollTop: $(".ps-right-content-wrap").offset().top - 150
+            }, 500);
+            psLib.ReInit(['Carousel']);
+            ajustaCards("#picture-carousel");
+            ajustaCards("#wide-blocks-carousel");
+        }
+    });
+}
+
+/* EVENT LISTENERS */
+window.addEventListener("orientationchange", function () {
+    setTimeout(function () {
+        windowW = $(window).innerWidth();
+        changeBtnLeftNav(windowW);
+        applyHeaderMobile(windowW);
+        appendAside(windowW);
+        toggleAccordionMobile(windowW);
+    }, 100);
+    setTimeout(function () {
+        $('.ps-modal-visible.ps-modal-iframe iframe').height("auto");
+        if ($("body").hasClass("ps-modal-backdrop-visible")) {
+            ajustaIframeModal();
+        }
+        ajustaCards("#picture-carousel");
+        ajustaCards("#wide-blocks-carousel");
+    }, 500);
+});
+
+$(window).resize(function () {
+    windowW = $(window).innerWidth();
+    changeBtnLeftNav(windowW);
+    applyHeaderMobile(windowW);
+    appendAside(windowW);
+    toggleAccordionMobile(windowW);
+    setTimeout(function () {
+        ajustaCards("#picture-carousel");
+        ajustaCards("#wide-blocks-carousel");
+    }, 500);
+});
+
+window.addEventListener('message', function (event) {
+    if (event.data === 'clickDados') psLib.ModalShowHide('#dadosAcessoModal');
+});
+/* end EVENT LISTENERS */
+
+////// SHOW PASSWORD ///////
+$(".ps-show-password").click(function () {
+    $(this).toggleClass("closed");
+    var typeAttr = $(this).parents(".ps-password-wrap").find("input").attr("type");
+    if (typeAttr == "password") {
+        $(this).parents(".ps-password-wrap").find("input").attr("type", "text");
+    } else {
+        $(this).parents(".ps-password-wrap").find("input").attr("type", "password");
+    }
+});
+
+/*put Loading on button : you have to pass a jquery selector*/
+var Loading=function(selector){
+  this.selector=selector;
+
+  this.validation=function(){
+
+    if($(this.selector).find("span").length>0){
+      $(this.selector).removeClass("ps-btn-ico-right").find("span").removeClass("ps-ico-arrow-right");
+    }
+
+  };
+
+    this.putLoadings=function(){
+      this.validation();
+      $(this.selector).append("<span class='ps-ico ps-ico-loading' style='float:right'></span>").addClass("ps-btn-disabled");
+
+      if($(this.selector).hasClass("ps-btn-primary")){
+        $(this.selector).find("span").addClass("ps-ico-loading-white");
+      }
+    }
+
+    this.putLoadings();
+  };
+  /*FIM put Loading on button*/
+
+////////////// CÓDIGO GA ////////////////
+var GA_gtmMetaDatas = function() {
+    this.gtmLink = function () {
+        $("a").each(function () {
+            var txt = $(this).text();
+
+            if ($(this).hasClass("ps-btn-back")) {
+                txt = "voltar";
+            }
+            if ($(this).attr("id") == "modalControllerOff") {
+                txt = "fechar";
+            }
+
+            //verifica se o link é um botao
+            if ($(this).hasClass("ps-btn-text")) {
+                $(this).attr("data-gtm-clicktype", "link");
+            } else {
+                $(this).attr("data-gtm-clicktype", "button");
+            }
+            $(this).attr("data-gtm-type", "click");
+
+            if(txt!=''){
+              $(this).attr("data-gtm-name", txt);
+            }
+
+        });
+        return this;
+    };
+
+this.inputs = function () {
+  $("input").each(function () {
+      var name = $(this).attr("name");
+      if ($(this).is("[type=radio]") || $(this).is("[type=checkbox]")) {
+          $(this).attr("data-gtm-type", "check");
+          $(this).attr("data-gtm-name", name);
+      };
+  });
+  return this;
+};
+
+this.selects = function () {
+  $("select").each(function () {
+      var name = $(this).attr("name");
+      $(this).attr("data-gtm-type", "select");
+      $(this).attr("data-gtm-name", name);
+  });
+  return this;
+};
+
+this.gtmCarousel = function () {
+  $(".ps-carousel-item").each(function () {
+      var idx = $(this).index();
+      if ($(this).hasClass("slick-cloned")) {
+          return false;
+      }
+      if ($(this).find(".ps-card").length > 0) {
+          //TODO fazer codigo para card
+      } else {
+          $(this).attr("data-gtm-type", "banner");
+          $(this).attr("data-gtm-bannertype", "carousel");
+          $(this).attr("data-gtm-banner-index", idx);
+      }
+  });
+  return this;
+}, this.pushModal = function () {
+  $(".ps-open-modal").click(function () {
+      var title = $(this).attr("data-modal").split("#");
+      dataLayer.push({
+          'event': 'step_change',
+          'pg_title': title[1]
+      });
+  });
+  return this;
+};
+
+this.gtmLink().gtmCarousel().inputs().selects().pushModal();
+};
+
+////fim codigo GA
+
+/*scroll by position*/
+function scrollByPosition(posY){
+  var postMsg = {};
+  postMsg.message = "scrollByPosY";
+  postMsg.posY = posY;
+  window.parent.postMessage(JSON.stringify(postMsg ), "*");
+}
+
+/* DOM READY */
+$(document).ready(function () {
+
+  $("body").on("click",".ps-open-modal",function() {
+    scrollByPosition(1);
+  });
+
+  $("body").on("click","a.ps-frm-validate",function() {
+      let _this = this;
+      window.setTimeout(function() {
+        if($(_this).closest("form").find(".ps-frm-error").length > 0) {
+        scrollByPosition(1);
+        }
+      }, 200);
+  });
+  parent.postMessage("scrollTop", "*");
+
+    windowW = $(window).innerWidth();
+    applyHeaderMobile(windowW);
+    appendAside(windowW);
+    $(".ps-mini-popover:first").addClass("ps-mini-popover-active");
+
+    var headerHeight = $('#ps-topo-arena').outerHeight();
+
+    if (psLib.IsMobile || psLib.IsTablet) {
+        $(".ps-video-banner").find("video").css("display", "none");
+        $(".btn-download-apps").show();
+
+        var nextOffset = $(".ps-header--geral").outerHeight();
+
+        $(window).scroll(function () {
+            if ($(".ps-header--geral").length > 0) {
+                var scrollTop = $(window).scrollTop(),
+                    bodyOffset = $('body').offset().top,
+                    dist = bodyOffset - scrollTop;
+
+                if (dist < -1) {
+                    $(".ps-header--geral").parent().addClass("ps-header-fixed").next().css("margin-top", nextOffset + 1);
+                } else {
+                    $(".ps-header--geral").parent().removeClass("ps-header-fixed").next().css("margin-top", "");
+                }
+            }
+        });
+    }
+
+    modalOverVisible();
+
+    setTimeout(function () {
+        addFocusLbl();
+        resolveAutofill();
+        ajustaCards("#picture-carousel");
+        ajustaCards("#wide-blocks-carousel");
+    }, 600);
+
+    // FUNCOES IE10+
+    if (iExplorer === false) {
+        $(window).scroll(function () {
+            headerScroll(headerHeight);
+        });
+    }
+});

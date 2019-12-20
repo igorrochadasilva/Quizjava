@@ -1,0 +1,1347 @@
+vuit.provide('VignettePortal.DynamicAJAXClient');
+
+/**
+ * VignettePortal.DynamicAJAXClient
+ */
+VignettePortal.DynamicAJAXClient = function() {}
+
+vuit.mixin(VignettePortal.DynamicAJAXClient, {
+	portletInitialized: false,
+	dpiEnabledPortlets: [],
+
+	/**
+	 * This method is called when the portlet loads.  Its job is to find all the portlets on the page, create a portlet
+	 * object for that portlet and initialize the state of the portlet object.  For each portlet object we set the
+	 * containing div, the portlet state, and the UID of the portlet.   We also scan the HTML of the portlet for any
+	 * forms.  For any forms found we add an onsubmit handler so that we can capture the form submission process and
+	 * send it back to Portal through an AJAX request.
+	 */
+	dynamicStartup: function() {
+		dynamicStartup = true;
+		var pkg = VignettePortal.DynamicAJAXClient;
+	 	var portletComp;
+		if(vuit.exists('PageLayout')) {
+			portletComp = 'div.epi-modDrg';
+		} else {
+			//if page is not specified then initializing with default value.
+			if( VignettePortal.PortletDND !== undefined ) {
+				var config = VignettePortal.PortletDND.prototype.customConfig;
+				portletComp = 'div.'+config.portletClass;
+			} else {
+				portletComp = 'div.epi-modDrgTable';
+			}
+		}
+		try {
+			if (!pkg.portletInitialized) {
+				// find the portlets on the page as per the orientation on page
+				var portletDivs = vuit.query(portletComp);
+				for (var i = 0; i < portletDivs.length; i++) {
+					if (!pkg.portletInitialized) {
+						pkg.portletInitialized = true;
+					}
+					var uid = portletDivs[i].getAttribute("uid");
+					// extract render state from portlet rendering.  This is placed here from the insertportletrenderingtag
+					var s = window['portletState'+uid];
+					if (s) {
+						pkg.dpiEnabledPortlets[uid] = new pkg.Portlet(uid, portletDivs[i]);
+						pkg.dpiEnabledPortlets[uid].state = s;
+						pkg.scanPortletForms(portletDivs[i]);
+					}
+				}
+			}
+		} catch (err) {
+			console.error("dynamicStartup", err);
+		}
+	},
+
+	/**
+	 * This is the function that is called from within the rendered portlet URLs
+	 * (i.e. <A HREF="javascript:portletURL(...)">)
+	 * @param params state information
+	 */
+	portletURL: function(params) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		var portlet ;
+		var removeAction = false;
+		if (params.targetUID != undefined) {
+			portlet = pkg.dpiEnabledPortlets[params.targetUID];
+		} else {
+			var targetUID = new VignettePortal.DynamicAJAXClient().getPortletUIDFromURL(params.baseURL);
+			if (targetUID != undefined) {
+				portlet = pkg.dpiEnabledPortlets[targetUID];
+				removeAction = true;
+			}
+		}
+		// render or action?
+		if(portlet != undefined) {
+			if (params.urlType === 'action') {
+				portlet.submitActionLink(params,removeAction);
+			} else {
+				if (pkg.isRenderedInDirectMode(params.targetState,params.urlType,params.pageParams)) {
+					pkg.renderInDirectMode(params);
+				} else {
+					var wasMaximized = false ;
+					if (portlet.state.targetState === 'maximized') {
+						wasMaximized = true ;
+					}
+					portlet.state = params;
+					portlet.reRender(wasMaximized);
+				}
+			}
+		} else {
+		   // due to some reason if dynamicStartup isn't invoked - we will allow it to work
+		   // in non ajax mode
+		   var url = new VignettePortal.DynamicAJAXClient().buildRenderURL(params,null);
+		   pkg.submitURLDirectly(url);
+		}
+	},
+
+	updatePortletDivId: function(uid, newDivId) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		if (pkg.dpiEnabledPortlets[uid]) {
+			pkg.dpiEnabledPortlets[uid].divNodeId = newDivId;
+		}
+	},
+
+	// updating all the divids of the portlets in panel after removing dpi enabled portlet.
+	updatePortletDivIdsForAll: function(panel) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		var portlets = vuit.query('.'+config.portletClass, panel);
+		for (i=0; i<portlets.length; i++) {
+			var newId = 'm' + panel.id.substring(1) + '_' + i;
+			portlets[i].id = newId;
+			var uid = portlets[i].attributes["uid"].value;
+			if (pkg.dpiEnabledPortlets[uid]) {
+				pkg.dpiEnabledPortlets[uid].divNodeId = newId;
+			}
+		}
+	},
+
+	META_REGEX: /<META[^>]*?HTTP-EQUIV="Refresh"[^>]*?URL=([^"]*?)\"/gi,
+	identifyMetaRefresh: function(htmlContent) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		var matches = pkg.META_REGEX.exec(htmlContent);
+		if (matches != null) {
+			return matches[1] ;
+		}
+		return null;
+	},
+
+	/**
+	 * This method is called to submit the url at page level rather through AJAX call
+	 */
+	renderInDirectMode: function(params) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		var url = new VignettePortal.DynamicAJAXClient().buildRenderURL(params, null);
+		pkg.submitURLDirectly(url);
+	},
+
+	/**
+	 *  This method is called to determine how the url should be submitted
+	 */
+	isRenderedInDirectMode: function(state, urlType, pageParams) {
+		return state === "raw" || state === "solo" || state === "binary" || urlType === 'resource' || urlType === 'resolver' || (pageParams && pageParams.length > 0);
+	},
+
+	/**
+	 * Return true if the page accessed if of my page type
+	 */
+	isMyPageURL: function(baseURL) {
+		return baseURL.indexOf("template.MY_PAGES_") !== -1;
+	},
+
+	/**
+	 * This method is called to submit the URL directly (causing complete refresh of page)
+	 * rather through AJAX call.
+	 * This method might be called in case of redirect and when targetState is 'RAW' or 'SOLO'
+	 */
+	submitURLDirectly: function(url) {
+		parent.location=url;
+	},
+
+	/**
+	 * Finds all forms under the current DIV node in the DOM.  Create a form object and set an onsubmit handler back to
+	 * the form object's formHandler() method. In this way we capture the submission of all portlet forms.
+	 * @param portletDiv
+	 */
+	scanPortletForms: function(portletDiv) {
+		try {
+			var vapDynamic = new VignettePortal.DynamicAJAXClient();
+			vapDynamic.scanPortletDivForJScriptPopUp(portletDiv);
+			vapDynamic.scanPortletDivForReplacePatterns(portletDiv);
+			var forms = vuit.query('FORM', portletDiv);
+			var count = 0;
+			for (var i = 0; i < forms.length; i++) {
+				var form = forms[i];
+				if(form.action != null && form.action.indexOf("portletURL") != -1) {
+					var uid = portletDiv.getAttribute("uid");
+					var vgnDPIButSub = "vgnDPIButSub"+ uid;
+					count++;
+					var submitButtonExist = false ;
+					var inputs = vuit.query('input[type=submit]', form);
+
+					var executeOriginalMethod = function(button) {
+						if (bw.ie) {
+							var xyz = button.getAttribute("orginalMethod");
+							button.removeAttribute("orginalMethod");
+							Function.prototype.toFunction = function() {
+								return this;
+							}
+							fun = xyz.toFunction();
+							fun();
+						} else {
+							method = button.getAttribute("onclick");
+							var methodName = method.substring(0, method.indexOf('('));
+							var url = method.substring(method.indexOf('(') + 1, method.lastIndexOf(')'));
+							var exmethod = "javascript:" + methodName + "(" + url + ");";
+							eval(exmethod);
+						}
+					};
+
+					var updateBtnName = function(button, form, originalExist) {
+//						var elements = Ext.DomQuery.select('input[name=vgnDPIButtonsubmitted]', form);
+						var vgnButSub = "vgnDPIButSub" + uid;
+						var elements = vuit.query("input[name=" + vgnButSub + "]", form);
+						if (!elements || elements.length == 0) {
+							elements = vuit.query("input[id=" + vgnButSub + "]", form);
+						}
+						if (elements != undefined && elements.length > 0) {
+							elements[0].value = button.name;
+						}
+						if (originalExist) {
+							executeOriginalMethod(button);
+						}
+					};
+					var processInputElements = function(inputs,uid) {
+						var exist = false;
+						for(var k=0; k<inputs.length; k++){
+							var inputElement = inputs[k];
+							var originalMethod = inputElement.getAttribute('onclick');
+							if (bw.ie) {
+								if (originalMethod != undefined || originalMethod != null) {
+									// Temporarily creating an attribute to hold current button's onclick method.
+									inputElement.setAttribute("orginalMethod", originalMethod);
+									inputElement.onclick = function() {
+										updateBtnName(this, this.form, true);
+										return false;
+									}
+								} else {
+									inputElement.onclick = function() {
+										updateBtnName(this, this.form, false);
+										return true;
+									}
+								}
+							} else {
+								if (originalMethod != undefined || originalMethod != null) {
+									inputElement.onclick = function() {
+										updateBtnName(this, this.form, true);
+										return false;
+									}
+								} else {
+									inputElement.onclick = function() {
+										updateBtnName(this, this.form, false);
+										return true;
+									}
+								}
+							}
+							/*inputElement.onclick = function(){
+								var button = this;
+								var form = button.form;
+								var vgnButSub = "vgnDPIButSub" + uid;
+								var elements = vuit.query("input[name=" + vgnButSub + "]", form);
+								if (!elements || elements.length == 0) {
+									elements = vuit.query("input[id=" + vgnButSub + "]", form);
+								}
+								if (elements && elements.length > 0) {
+									elements[0].value = button.name;
+								} else {
+									var sub = document.createElement("input");
+									sub.setAttribute("name", vgnButSub);
+									sub.setAttribute("id", vgnButSub);
+									sub.setAttribute("value", button.name);
+									sub.setAttribute("type", "hidden");
+									form.appendChild(sub);
+								}
+								if (originalMethod) {
+//									originalMethod.apply(button, arguments);
+									if (typeof originalMethod === 'function') {
+										originalMethod.apply(button, arguments);
+									} else if (typeof originalMethod === 'string') {
+										(function() {
+											eval(originalMethod);
+										}).eval(button, arguments); // this way the originalMethod will be eval()-ed w/ button as "this".
+									}
+								}
+							};*/
+							exist = true;
+						}
+						return exist;
+					};
+					submitButtonExist = processInputElements(inputs,uid);
+					inputs = vuit.query('input[type=image]', form);
+					var imageButtonExist = processInputElements(inputs,uid);
+					if (submitButtonExist || imageButtonExist) {
+						var sub = document.createElement("input");
+						sub.setAttribute("name", vgnDPIButSub);
+						sub.setAttribute("id", vgnDPIButSub);
+						sub.setAttribute("value", "");
+						sub.setAttribute("type", "hidden");
+						form.appendChild(sub);
+					}
+					// Add a standard submit input to form.  When we send with ajax the submit element is lost otherwise
+					// and some portlets expect to find that element.
+					form.onsubmit = function() {
+						new VignettePortal.DynamicAJAXClient().formHandler(this);
+						return false;
+					};
+				}
+			}
+		} catch (err) {
+			console.error("scanPortletForms", err);
+		}
+		return count;
+	}
+
+});
+
+VignettePortal.DynamicAJAXClient.prototype = {
+	PORTLET_URL_REGEX: /portletURL\(\s*({.*})\)/g,
+	formHandler : function (form, dpiOff) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		try {
+			var action = form.action;
+			action = this.URLDecode(action);
+			// Have to extract the state from the javascript.
+			var portletURLExp = new RegExp(this.PORTLET_URL_REGEX);
+			var matches = portletURLExp.exec(action);
+			var actionState = null;
+			var portlet  = null;
+			if (matches != null) {
+				actionState = vuit.fromJson(matches[1]);
+				if (actionState != null) {
+					portlet = pkg.dpiEnabledPortlets[actionState.targetUID];
+				}
+			}
+			if (dpiOff === "undefined" || dpiOff === undefined) {
+				dpiOff = false;
+			}
+
+			// Find the targeted portlet
+			if (portlet != undefined && portlet != null && !dpiOff) {
+				portlet.submitForm(form,actionState);
+			} else {
+				var url = form.action;
+				var elements;
+				if (actionState != null) {
+					url = this.buildRenderURL(actionState, null);
+					elements = vuit.query("input[name=vgnDPIButSub" + actionState.targetUID + "]", form);
+					form.action = url;
+				}
+				if (elements != undefined && elements.length > 0) {
+					var submitTracker = elements[0];
+					// if form submission is on same page then only remove the hiddden variable details from the form.
+					if (form.target === '_self' || form.target === '_top') {
+						form.removeChild(submitTracker);
+					}
+				}
+				form.submit();
+			}
+		} catch (err) {
+			console.error('formHandler', err);
+		}
+		return false;
+	},
+
+	parseRPIURL : function (url, dpiOff) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		var decodedURL = this.URLDecode(url);
+		var portletURLExp = new RegExp(this.PORTLET_URL_REGEX);
+		var matches = portletURLExp.exec(decodedURL);
+		var actionState = null;
+		var returnURL = url;
+		try {
+			if (matches != null) {
+				actionState = vuit.fromJson(matches[1]);
+				if (actionState != null) {
+					var templateToUse = null ;
+					if (dpiOff === "undefined") {
+						dpiOff = false;
+					}
+					if (!pkg.isRenderedInDirectMode(actionState.targetState, actionState.urlType, actionState.pageParams) && (!dpiOff)) {
+							templateToUse = this.getTemplateToUse(actionState.baseURL) ;
+					}
+					returnURL = this.buildRenderURL(actionState,templateToUse);
+				}
+			}
+		} catch (err) {
+			console.err('parseRPIURL', err);
+			return url;
+		}
+		return returnURL;
+	},
+
+	updateTheAttrOfElement : function (replace,nodes,attributeName,pattern,pos,newValueFormat) {
+		if (nodes === undefined || nodes === null || attributeName === undefined || attributeName === null) {
+			return ;
+		}
+		var retArray = new Array();
+		for(var i=0; i<nodes.length; i++){
+			var attrValue = nodes[i].getAttribute(attributeName);
+			if(attrValue != null && attrValue.length > 0){
+				var posPattern = attrValue.indexOf(pattern);
+				if (pos > -1 && posPattern === pos || pos < 0 && posPattern > -1) {
+					var startIndex = posPattern + pattern.length;
+					if (replace) {
+						attrValue = attrValue.substring(startIndex,attrValue.indexOf(')'));
+						attrValue = this.URLDecode(attrValue);
+						var state =  vuit.fromJson(attrValue);
+						var newValue = this.buildRenderURL(state, null) ;
+						if (newValueFormat != undefined || newValueFormat != null) {
+							newValue = newValueFormat.replace('#replace#',newValue);
+						}
+						nodes[i].setAttribute(attributeName,newValue);
+					} else {
+						retArray[retArray.length] = nodes[i];
+					}
+				}
+			}
+		}
+		return retArray;
+	},
+
+	scanPortletDivForJScriptPopUp : function (portletDiv) {
+		try {
+			var popupRef = vuit.query('a[href*=javascript:doPopup]', portletDiv);
+			var displayRef = vuit.query('a[href*=javascript:displayWindow]', portletDiv);
+			var pattern = 'javascript:portletURL(';
+			var valuePatternPopUp = 'javascript:doPopup("#replace#")';
+			var valuePatternDisplay = 'javascript:displayWindow("#replace#")';
+			this.updateTheAttrOfElement(true,popupRef,'href',pattern,-1,valuePatternPopUp);
+			this.updateTheAttrOfElement(true,displayRef,'href',pattern,-1,valuePatternDisplay);
+		}  catch (err) {
+			console.error("scanPortletDivForJScriptPopUp" + err);
+		}
+	},
+
+	scanPortletDivForReplacePatterns : function (portletDiv) {
+		var pattern = 'javascript:portletURL(', t = this;
+		var ea = [['img','src'],['iframe','src'],['embed','src'],['object','data'],['link','href']];
+		try {
+			for (var i=0; i<ea.length; i++) {
+				var els = vuit.query(ea[i][0]+'['+ea[i][1]+'*=javascript:portletURL]');
+				t.updateTheAttrOfElement(true,els,ea[i][1],pattern,0);
+			}
+		}  catch (err) {
+			console.error("scanPortletDivForReplacePatterns" + err);
+		}
+	},
+
+	getPortletUIDFromURL : function (baseURL) {
+		var uri = baseURL;
+		var porletToRemove = "portletToRemove";
+		var index1 = baseURL.indexOf(porletToRemove);
+		var len = porletToRemove.length;
+		var uid = uri.substring(index1 + len + 1);
+		return uid;
+	},
+
+	BASE_TEMPLATE_REGEX: /template\.\w*/g,
+	buildRenderURL : function (params, template) {
+		var base = params.baseURL;
+		var tpst = params.tpst;
+		var targetParams = params.targetParams;
+		var pageParams = params.pageParams;
+		var beginToken = params.BEGIN_CACHE_TOKEN;
+		var endToken = params.END_CACHE_TOKEN;
+		var syncToken = params.SYNC_TOKEN;
+
+		if(template!=null) {
+			base = base.replace(this.BASE_TEMPLATE_REGEX, 'template.'+template);
+		}
+		var ret = base;
+
+		if (tpst != null) {
+			if(base.indexOf("?")!=-1) {
+				ret = ret + "&" + tpst;
+			} else {
+				ret = ret + "?" + tpst;
+			}
+		}
+
+		if(pageParams != null && pageParams.length>0) {
+			var tp = "";
+			var first = true;
+
+			for(var i=0;i<pageParams.length;i++) {
+				if(first)
+					first = false;
+				else
+					tp = tp + "&";
+				var idx = pageParams[i].indexOf("=");
+				var name = pageParams[i].substring(0, idx);
+				var value = pageParams[i].substring(idx+1);
+
+				tp = tp + name + "=" + this.URLEncode(value);
+			}
+			ret = ret + "&" + tp;
+		}
+
+		if(targetParams != null && targetParams.length>0) {
+			var tp = "";
+			var first = true;
+
+			for(var i=0;i<targetParams.length;i++) {
+				if(first)
+					first = false;
+				else
+					tp = tp + "&";
+				var idx = targetParams[i].indexOf("=");
+				var name = targetParams[i].substring(0, idx);
+				var value = targetParams[i].substring(idx+1);
+
+				tp = tp + name + "=" + this.URLEncode(value);
+			}
+			ret = ret + "&" + tp;
+		}
+
+		if (beginToken != null && endToken != null) {
+			ret = ret + "&" + beginToken;
+			ret = ret + "&" + endToken;
+		}
+
+		if(syncToken != null && syncToken != undefined) {
+			ret = ret + "&" + syncToken;
+		}
+		return ret;
+	},
+
+	getTemplateToUse : function (baseURL) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		var templateToUse ;
+		if (pkg.isMyPageURL(baseURL)) {
+			templateToUse = 'MY_PAGES_DYNAMIC';
+		} else {
+			templateToUse = 'DYNAMIC';
+		}
+		return templateToUse;
+
+	},
+
+	URLDecode : function (encodedString) {
+		var output = '';
+		var x = 0;
+		var parseStr = encodedString.toString();
+		var regex = /(%[^%]{2})/;
+		while (x < encodedString.length) {
+			parseStr = encodedString.substring(x);
+			var match = regex.exec(parseStr);
+			if (match != null && match.length > 1 && match[1] != '') {
+				var binVal = parseInt(match[1].substr(1),16);
+				var newValue = String.fromCharCode(binVal);
+				output += parseStr.substring(0,match.index) + newValue;
+				x += match.index + match[1].length;
+			} else {
+				output += parseStr;
+				break;
+			}
+		}
+		return output;
+	},
+
+	URLEncode : function (clearString) {
+		var output = '';
+		var x = 0;
+		clearString = clearString.toString();
+		var regex = /(^[a-zA-Z0-9_.]*)/;
+		while (x < clearString.length) {
+			var match = regex.exec(clearString.substr(x));
+			if (match != null && match.length > 1 && match[1] != '') {
+				output += match[1];
+				x += match[1].length;
+			} else {
+				if (clearString[x] === ' ')
+					output += '+';
+				else {
+					var charCode = clearString.charCodeAt(x);
+					var hexVal = charCode.toString(16);
+					output += '%' + ( hexVal.length < 2 ? '0' : '' ) + hexVal.toUpperCase();
+				}
+				x++;
+			}
+		}
+		return output;
+	}
+};
+
+
+vuit.provide('VignettePortal.DynamicAJAXClient.DivPosInfo');
+
+/**
+*  This structure holds the information of various div tags that are hidden during
+*  maximized operation
+*/
+function DivPosInfo(curDivider,allDividers,divInDivider,divInPanel) {
+   this.curDivider = curDivider;
+   this.AllDividers = allDividers;
+   this.divInDivider = divInDivider;
+   this.divInPanel = divInPanel;
+}
+
+
+vuit.provide('VignettePortal.DynamicAJAXClient.Portlet');
+
+/**
+ * Portlet object.  We create one per portlet on the page.
+ * @param uid
+ * @param divNode
+ */
+VignettePortal.DynamicAJAXClient.Portlet = function(uid, divNode) {
+    this.uid = uid;
+    this.divNode = divNode;
+    this.divNodeId = this.divNode.id;
+    this.state = null;
+    this.divPosInfo = null;
+};
+
+VignettePortal.DynamicAJAXClient.Portlet.prototype = {
+	/**
+	 * Method on the portlet object that is called when the portlet needs to be re-rendered.  Uses its current state
+	 * to get a URL to use for AJAX call to get current rendering.  On the AJAX callback it replaces its rendering in
+	 * its DIV container.
+	 */
+	reRender: function(wasMaximized) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		var url;
+		var vapDynamic = new VignettePortal.DynamicAJAXClient();
+		if (pkg.isMyPageURL(this.state.baseURL)) {
+			url = vapDynamic.buildRenderURL(this.state, 'MY_PAGES_DYNAMIC');
+		} else if(this.state.baseURL.indexOf("/resolver.") != -1) {
+			url = vapDynamic.buildRenderURL(this.state, 'PAGE');
+			return;
+		} else {
+			url = vapDynamic.buildRenderURL(this.state, 'DYNAMIC');
+		}
+		var curPortlet = this;
+		new VignettePortal.AJAXClient().sendURL(url, function(resp) {
+			var responseText = resp.responseText;
+			curPortlet.renderResponseHandler(responseText,wasMaximized);
+			if (vuit.exists('PageLayout')) {
+				PageLayout.render();
+			}
+		});
+	},
+
+	renderResponseHandler: function(responseText,wasMaximized,fromFormSubmit) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		var div = this.divNode;
+		var uid = this.uid;
+		var curPortlet = this;
+		var origHTMLContent = responseText;
+		var updateDivLater = false ;
+		if (origHTMLContent != null) {
+			origHTMLContent = vuit.trim(origHTMLContent);
+			if (origHTMLContent.indexOf("<body><script") === 0) {
+				updateDivLater = true;
+			}
+			var refreshURL = pkg.identifyMetaRefresh(origHTMLContent);
+			if (refreshURL != null) {
+				if (refreshURL.indexOf("javascript:portletURL") === 0) {
+					refreshURL = new VignettePortal.DynamicAJAXClient().parseRPIURL(refreshURL, true);
+				}
+				pkg.submitURLDirectly(refreshURL);
+				return;
+			}
+		}
+		if (!updateDivLater) {
+			div.innerHTML = origHTMLContent;
+		}
+		try {
+			new VignettePortal.AJAXClient().addScripts(origHTMLContent);
+		} catch (e) {}
+		var returnedState = window['portletState'+uid];
+
+		if (returnedState.isRedirect != undefined && returnedState.isRedirect) {
+			if (curPortlet.uid === returnedState.targetUID) {
+				curPortlet.state = returnedState ;
+				curPortlet.reRender(wasMaximized);
+				return;
+			} else {
+				pkg.renderInDirectMode(returnedState);
+				return;
+			}
+		} else if (fromFormSubmit  != undefined && fromFormSubmit) {
+			curPortlet.state = returnedState ;
+		}
+		if (updateDivLater) {
+			div.innerHTML = origHTMLContent;
+		}
+		if ((wasMaximized === undefined || (!wasMaximized)) && returnedState.targetState === 'maximized') {
+			curPortlet.handleMaximize();
+		}
+
+		if (wasMaximized != undefined && wasMaximized && (returnedState.targetState === 'normal' ||
+														  returnedState.targetState === 'minimized')) {
+			curPortlet.restoreNormalState(true);
+		}
+
+		for(var o in returnedState.nonTargetParams) {
+			var nonTargetInfo = returnedState.nonTargetParams[o];
+			var p = pkg.dpiEnabledPortlets[o];
+			if (p != undefined && nonTargetInfo.length != 0) {
+				if (vuit.trim(nonTargetInfo[0]) != '') {
+					p.state.targetParams = nonTargetInfo;
+					p.reRender();
+				}
+			}
+		}
+		if (vuit.exists('PageLayout')) {
+			PageLayout.render();
+		} else{
+			config = VignettePortal.PortletDND.prototype.customConfig;
+			VignettePortal.PortletDND.prototype.init(config);
+		}
+		pkg.scanPortletForms(div);
+	},
+
+	/**
+	* This method is called to handle maximizing the portlet.
+	*/
+	handleMaximize: function() {
+		if (vuit.exists('typeOfOrientation')) {
+			if (typeOfOrientation == "row") {
+				this.handleMaxInRowMode();
+			} else if (typeOfOrientation == "column") {
+				this.handleMaxInColumnMode();
+			}
+		} else if(VignettePortal.PortletDND !== undefined) {
+			this.handleMaxInTableMode();
+		}
+		window.scrollTo(0, 0);
+	},
+
+	/**
+	* This method is called to restore a maximized portlet into normal state
+	*/
+	restoreNormalState: function(reRenderPage) {
+		if (vuit.exists('typeOfOrientation')) {
+			if(typeOfOrientation == "row") {
+				this.restoreNormalInRowMode();
+			} else if (typeOfOrientation == "column") {
+				this.restoreNormalInColumnMode();
+			}
+		}else if(VignettePortal.PortletDND !== undefined) {
+				this.restoreNormalInTableMode();
+		}
+		if (reRenderPage != undefined && reRenderPage && VignettePortal.PortletDND === undefined ) {
+			PageLayout.render();
+		}
+	},
+
+	/**
+	* This method is called to handle maximizing the portlet when portlet placement layout is
+	* displayed in column mode
+	*/
+	handleMaxInColumnMode: function() {
+		var curDivide ;
+		var curRow;
+		var curPanel ;
+		var moduleDiv ;
+		var curOrgDivider = null ;
+		var allDivider = new Array();
+		var divInDivider = new Array();
+		var divInPanel = new Array();
+
+		if (vuit.exists('Panels')) {
+			var gotPanel = false ;
+			for(j = 0 ; j < Panels.length && (!gotPanel); j++) {
+				for (k = 0; k < Panels[j].rows.length; k++) {
+					if(this.divNodeId === Panels[j].rows[k].id) {
+						moduleDiv = Panels[j].rows[k];
+						curPanel = Panels[j];
+						curDivide = Panels[j].parent.parent;
+						gotPanel = true;
+						break;
+					}
+				}
+			}
+		}
+		for (k = 0; k < Dividers.length ; k++) {
+			if(curDivide.id === Dividers[k].id) {
+				allDivider[allDivider.length] = Dividers[k].copyObject();
+			} else {
+				allDivider[allDivider.length] = Dividers[k];
+			}
+		}
+		var curRowFound = false ;
+
+		for (k = 0; k < curDivide.rows.length ; k++) {
+			var row = curDivide.rows[k];
+			for (j = 0 ; j < row.columns.length && (!curRowFound) ; j++) {
+				if(curPanel.id === row.columns[j].id) {
+					curRow = row;
+					break;
+				}
+			}
+			if (curRow === row) {
+				divInDivider[divInDivider.length] = curDivide.rows[k].copyObject();
+			} else {
+				divInDivider[divInDivider.length] = curDivide.rows[k];
+			}
+		}
+
+		for (k = 0; k < curPanel.rows.length; k++) {
+			if(moduleDiv.id === curPanel.rows[k].id) {
+				divInPanel[divInPanel.length] = curPanel.rows[k].copyObject();
+			} else {
+				divInPanel[divInPanel.length] = curPanel.rows[k];
+			}
+		}
+
+		// first hide and remove all the Dividers except the one that contains a given panel
+		if (curDivide != undefined && curDivide != null) {
+			curOrgDivider = curDivide.copyObject();
+			curDivide.parent.removeAllColumnExceptThis(curDivide);
+		}
+
+		// hide and remove all the rows in current divider except for the one that contains our panel
+		if (curRow != undefined && curDivide != undefined && curRow != null && curDivide != null) {
+			curDivide.removeAllRowExceptThis(curRow);
+		}
+
+		// hide and remove all the modules except our module from a given panel
+		if (curPanel != undefined && moduleDiv != undefined && curPanel != null && moduleDiv != null) {
+			curPanel.removeAllRowExceptThis(moduleDiv);
+		}
+
+		this.divPosInfo = new DivPosInfo(curOrgDivider,allDivider,divInDivider,divInPanel);
+
+		curDivide.width = "100%";
+		curDivide.height = "100%"
+
+		curPanel.width = "100%";
+		curPanel.height = "100%";
+
+		PageLayout.render();
+	},
+
+	/**
+	* This method is called to restore a maximized portlet into normal window state when
+	* page layout is column oriented
+	*/
+	restoreNormalInColumnMode: function() {
+		var dividerParent = null ;
+		var curDivide = null;
+		var curPanel = null ;
+		var moduleDiv = null;
+
+		// Sanity check
+		if (this.divPosInfo === undefined || this.divPosInfo === null || (!vuit.exists('Dividers')) || (!vuit.exists('PageLayout'))) {
+			console.error("restoreNormalInColumnMode", "failed sanity check");
+		}
+
+		var gotPanel = false ;
+		for(j = 0 ; j < Panels.length && (!gotPanel); j++) {
+			for (k = 0; k < Panels[j].rows.length; k++) {
+				if(this.divNodeId === Panels[j].rows[k].id) {
+					moduleDiv = Panels[j].rows[k];
+					curPanel = Panels[j];
+					curDivide = Panels[j].parent.parent;
+					gotPanel = true;
+					break;
+				}
+			}
+		}
+		for (k = 0 ; k < this.divPosInfo.AllDividers.length; k++) {
+			if (curDivide.id === this.divPosInfo.AllDividers[k].id) {
+				var curDivWidth = this.divPosInfo.AllDividers[k].width;
+				this.divPosInfo.AllDividers[k] = curDivide;
+				this.divPosInfo.AllDividers[k].setWidth(curDivWidth);
+				break;
+			}
+		}
+
+		for (j = 0 ; j < curDivide.rows.length ; j++) {
+			var keepLooping = true ;
+			for (k = 0 ; k < this.divPosInfo.divInDivider.length && keepLooping ; k++) {
+				if (curDivide.rows[j].id === this.divPosInfo.divInDivider[k].id) {
+					keepLooping = false ;
+					var curDivRowWidth = this.divPosInfo.divInDivider[k].width;
+					this.divPosInfo.divInDivider[k] = curDivide.rows[j];
+					this.divPosInfo.divInDivider[k].setWidth(curDivRowWidth);
+				}
+			}
+		}
+		for (j = 0 ; j < curPanel.rows.length ; j++) {
+			var keepLooping = true ;
+			for (k = 0 ; k < this.divPosInfo.divInPanel.length && keepLooping ; k++) {
+				if (curPanel.rows[j].id === this.divPosInfo.divInPanel[k].id) {
+					keepLooping = false ;
+					var curDivPanelWidth = this.divPosInfo.divInPanel[k].width;
+					this.divPosInfo.divInPanel[k] = curPanel.rows[j];
+					this.divPosInfo.divInPanel[k].setWidth(curDivPanelWidth);
+				}
+			}
+		}
+		dividerParent = this.divPosInfo.curDivider.parent ;
+		curPanel.removeAllRowExceptThis();
+		curDivide.removeAllRowExceptThis();
+		dividerParent.removeAllColumnExceptThis();
+
+		dividerParent.replaceAllColumns(this.divPosInfo.AllDividers);
+		curDivide.replaceAllRows(this.divPosInfo.divInDivider);
+		curPanel.replaceAllRows(this.divPosInfo.divInPanel);
+	},
+
+	/**
+	* This method is called to handle maximizing the portlet when portlet placement layout is
+	* displayed in row mode
+	*/
+	handleMaxInRowMode: function() {
+		var curDivide ;
+		var curColumn;
+		var curPanel ;
+		var moduleDiv ;
+		var curOrgDivider = null ;
+		var allDivider = new Array();
+		var divInDivider = new Array();
+		var divInPanel = new Array();
+
+
+		if (vuit.exists('Panels')) {
+			var gotPanel = false ;
+			for(j = 0 ; j < Panels.length && (!gotPanel); j++) {
+				for (k = 0; k < Panels[j].rows.length; k++) {
+					if(this.divNodeId === Panels[j].rows[k].id) {
+						moduleDiv = Panels[j].rows[k];
+						curPanel = Panels[j];
+						curDivide = Panels[j].parent;
+						gotPanel = true;
+						break;
+					}
+				}
+			}
+		}
+		curOrgDivider = curDivide.copyObject();
+
+		for (k = 0; k < Dividers.length ; k++) {
+			if(curDivide.id === Dividers[k].id) {
+				allDivider[allDivider.length] = Dividers[k].copyObject();
+			} else {
+				allDivider[allDivider.length] = Dividers[k];
+			}
+		}
+
+		for (k = 0; k < curDivide.columns.length; k++) {
+			if(curPanel.id === curDivide.columns[k].id) {
+				curColumn = curDivide.columns[k];
+			}
+			if (curColumn === curDivide.columns[k]) {
+				divInDivider[divInDivider.length] = curDivide.columns[k].copyObject();
+			} else {
+				divInDivider[divInDivider.length] = curDivide.columns[k];
+			}
+		}
+
+		for (k = 0; k < curPanel.rows.length; k++) {
+			if(moduleDiv.id === curPanel.rows[k].id) {
+				curModulePos=k;
+				divInPanel[divInPanel.length] = curPanel.rows[k].copyObject();
+			} else {
+				divInPanel[divInPanel.length] = curPanel.rows[k];
+			}
+		}
+
+		// first hide and remove all the Dividers except the one that contains a given panel
+		if (curDivide != undefined && curDivide != null) {
+			curDivide.parent.removeAllRowExceptThis(curDivide);
+		}
+
+		if (curDivide != undefined && curDivide != null && curColumn != undefined && curColumn != null) {
+			curDivide.removeAllColumnExceptThis(curColumn);
+		}
+
+		// hide and remove all the rows except the module from a given panel
+		if (moduleDiv != undefined || moduleDiv != null) {
+			curPanel.removeAllRowExceptThis(moduleDiv);
+		}
+
+		this.divPosInfo = new DivPosInfo(curOrgDivider,allDivider,divInDivider,divInPanel);
+
+		curDivide.width = "100%";
+		curDivide.height = "100%"
+		curPanel.width = "100%";
+		curPanel.height = "100%";
+
+		PageLayout.render();
+	},
+
+	restoreNormalInRowMode: function() {
+		var dividerParent = null ;
+		var curDivide = null;
+		var curPanel = null ;
+		var moduleDiv =null;
+
+		// Sanity check
+		if (this.divPosInfo === undefined || this.divPosInfo === null || (!vuit.exists('Dividers')) || (!vuit.exists('PageLayout'))) {
+			console.error("restoreNormalInRowMode", 'failed sanity check');
+		}
+
+		var gotPanel = false ;
+		for(j = 0 ; j < Panels.length && (!gotPanel); j++) {
+			for (k = 0; k < Panels[j].rows.length; k++) {
+				if(this.divNodeId === Panels[j].rows[k].id) {
+					moduleDiv = Panels[j].rows[k];
+					curPanel = Panels[j];
+					curDivide = Panels[j].parent;
+					gotPanel = true;
+					break;
+				}
+			}
+		}
+		for (k = 0 ; k < this.divPosInfo.AllDividers.length; k++) {
+			if (curDivide.id === this.divPosInfo.AllDividers[k].id) {
+				var curDivWidth = this.divPosInfo.AllDividers[k].width;
+				this.divPosInfo.AllDividers[k] = curDivide;
+				this.divPosInfo.AllDividers[k].setWidth(curDivWidth);
+				break;
+			}
+		}
+
+		for (j = 0 ; j < curDivide.columns.length ; j++) {
+			var keepLooping = true ;
+			for (k = 0 ; k < this.divPosInfo.divInDivider.length && keepLooping ; k++) {
+				if (curDivide.columns[j].id === this.divPosInfo.divInDivider[k].id) {
+					keepLooping = false ;
+					var curDivColWidth = this.divPosInfo.divInDivider[k].width;
+					this.divPosInfo.divInDivider[k] = curDivide.columns[j];
+					this.divPosInfo.divInDivider[k].setWidth(curDivColWidth);
+				}
+			}
+		}
+		for (j = 0 ; j < curPanel.rows.length ; j++) {
+			var keepLooping = true ;
+			for (k = 0 ; k < this.divPosInfo.divInPanel.length && keepLooping ; k++) {
+				if (curPanel.rows[j].id === this.divPosInfo.divInPanel[k].id) {
+					keepLooping = false ;
+					var curDivPanelWidth = this.divPosInfo.divInPanel[k].width;
+					this.divPosInfo.divInPanel[k] = curPanel.rows[j];
+					this.divPosInfo.divInPanel[k].setWidth(curDivPanelWidth);
+				}
+			}
+		}
+		dividerParent = this.divPosInfo.curDivider.parent ;
+		curPanel.removeAllRowExceptThis();
+		curDivide.removeAllColumnExceptThis();
+		dividerParent.removeAllRowExceptThis();
+
+		dividerParent.replaceAllRows(this.divPosInfo.AllDividers);
+		curDivide.replaceAllColumns(this.divPosInfo.divInDivider);
+		curPanel.replaceAllRows(this.divPosInfo.divInPanel);
+	},
+
+	/**
+	* This method is called to handle maximizing the portlet when portlet placement layout is
+	* displayed in table orientation
+	*/
+	handleMaxInTableMode: function() {
+		//As  portletLayout  is not available taking config object from PortletDND
+		var config = VignettePortal.PortletDND.prototype.customConfig;
+		var panelId = this.divNode.parentNode.id;
+		var portletId = this.divNodeId;
+
+		// Setting display none for all the panel other than current panel.
+		vuit.query('.'+config.panelClass).forEach(function(panel){
+			if(panel.id !== panelId){
+				document.getElementById(panel.id).style.display = "none";
+			} else {
+				document.getElementById(panel.id).style.marginLeft="0";
+				document.getElementById(panel.id).style.minWidth="100%";
+			}
+		});
+
+		// Setting display none for all the portlet  other than current portlet.
+		vuit.query('.'+config.panelClass).forEach(function(panel){
+			if(panel.id === panelId){
+				var portlets = vuit.query('.'+config.portletClass, panel);
+				for (i=0; i<portlets.length; i++) {
+					if(portletId !== portlets[i].id) {
+						document.getElementById(portlets[i].id).style.display = "none";
+					}
+				}
+			}
+		});
+
+	},
+
+	restoreNormalInTableMode: function() {
+		//As  portletLayout  is not available taking config object from PortletDND
+		var config = VignettePortal.PortletDND.prototype.customConfig;
+		var panelId = this.divNode.parentNode.id;
+		var portletId = this.divNodeId;
+
+		// Setting display to empty for all the panel other than current panel.
+		vuit.query('.'+config.panelClass).forEach(function(panel){
+			if(panel.id !== panelId){
+				document.getElementById(panel.id).style.display = "";
+			} else {
+				document.getElementById(panel.id).style.marginLeft="";
+				document.getElementById(panel.id).style.minWidth="0%";
+			}
+		});
+
+		// Setting display to empty for all the portlet  other than current portlet.
+		vuit.query('.'+config.panelClass).forEach(function(panel){
+			if(panel.id === panelId){
+				var portlets = vuit.query('.'+config.portletClass, panel);
+				for (i=0; i<portlets.length; i++) {
+					if(portletId !== portlets[i].id) {
+						document.getElementById(portlets[i].id).style.display = "";
+					}
+				}
+			}
+		});
+	},
+
+	/**
+	 * Link click handler for a portlet action link.  We build the URL, submit it through AJAX and set our portlet
+	 * actionResponseHandler as the callback handler.
+	 * @param params portlet state map
+	 * @param removeAction whether the action request is for removing a portlet from a page
+	 */
+	submitActionLink: function(params,removeAction) {
+		try {
+			var vapDynamic = new VignettePortal.DynamicAJAXClient();
+			var templateToUse = vapDynamic.getTemplateToUse(params.baseURL) ;
+			var url = vapDynamic.buildRenderURL(params, templateToUse);
+
+			var me = this;
+			new VignettePortal.AJAXClient().sendURL(url, function(resp) {
+				var responseText = resp.responseText;
+				me.actionResponseHandler(responseText,removeAction);
+			});
+		} catch (err) {
+			console.error('submitActionLink', err);
+		}
+		return false;
+	},
+
+	/**
+	 * Callback handler from a Portlet action link click or a form submission.  In both cases the response will contain
+	 * a set of new portlet states.  We update each portlet objects state with any new state and rerender that portlet.
+	 * @param res
+	 * @param removeAction whether the action request was for removing a portlet from a page
+	 */
+	actionResponseHandler: function(responseText,removeAction) {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		try {
+			var wasMaximized = false;
+			if (this.state.targetState === 'maximized') {
+				wasMaximized = true;
+			}
+			if (removeAction) {
+				this.handleRemoveAction(wasMaximized);
+				return;
+			}
+			var returnedState = vuit.fromJson(responseText);
+			if (pkg.isRenderedInDirectMode(returnedState.targetState, returnedState.urlType, returnedState.pageParams)) {
+				pkg.renderInDirectMode(returnedState);
+				return;
+			} else {
+				this.state = returnedState;
+				this.reRender(wasMaximized);
+			}
+
+			// Assign each portlet any new state that may have resulted from the action
+			for(var o in returnedState.nonTargetParams) {
+			   var nonTargetInfo = returnedState.nonTargetParams[o];
+			   var p = pkg.dpiEnabledPortlets[o];
+			   var portletWasInMaxState = false ;
+			   if (nonTargetInfo.windowState) {
+				   if (p.state.targetState === 'maximized') {
+					  portletWasInMaxState = true;
+				   }
+				   p.state.targetState = nonTargetInfo.windowState;
+			   }
+			   if (nonTargetInfo.portletMode) {
+				   p.state.targetMode = nonTargetInfo.portletMode;
+			   }
+			   if (nonTargetInfo.tpst) {
+				   p.state.tpst = nonTargetInfo.tpst;
+			   }
+			   if (nonTargetInfo.parameter && nonTargetInfo.parameter.length !== 0) {
+				   p.state.targetParams = nonTargetInfo.parameter;
+			   }
+			   if (this.state.targetState === 'maximized') {
+					wasMaximized = true ;
+				}
+				p.reRender(portletWasInMaxState);
+			}
+		} catch (err) {
+			console.error('actionResponseHandler', err);
+		}
+	},
+
+	/**
+	* This method is called to handle updation of client div tags after remove operation
+	* was successfully completed on server.
+	*/
+	handleRemoveAction: function(wasMaximized) {
+
+		if (wasMaximized !== undefined && wasMaximized) {
+		   this.restoreNormalState(false);
+		}
+		if (VignettePortal.PortletDND !== undefined) {
+			this.handleRemoveInTableOrientation();
+		} else {
+			if (vuit.exists('typeOfOrientation')) {
+				this.handleRemoveInRowColumnOrientation();
+			}
+		}
+	},
+
+	handleRemoveInTableOrientation: function() {
+		var pkg = VignettePortal.DynamicAJAXClient;
+		config = VignettePortal.PortletDND.prototype.customConfig;
+		var panelId = this.divNode.parentNode.id;
+		var portletId = this.divNodeId;
+		var moduleItems = null;
+		var uid = this.uid;
+		// Due to unavailble of portletLayout Object, depending on PortletDND.js to identify panels and portlets.
+		vuit.query('.'+config.panelClass).forEach(function(panel){
+			if(panel.id === panelId){
+				var portlets = vuit.query('.'+config.portletClass, panel);
+				for (i=0; i<portlets.length; i++) {
+					if(portletId === portlets[i].id) {
+						var portletDiv = pkg.dpiEnabledPortlets[uid].divNode;
+						var parentNode = portletDiv.parentNode;
+						parentNode.removeChild(portletDiv);
+						break;
+					}
+				}
+				updatePortletDivIdsForAll(panel);
+			}
+		});
+	},
+
+	handleRemoveInRowColumnOrientation: function() {
+		var gotPanel = false ;
+		var curPanel ;
+		var moduleDiv ;
+		for(j = 0 ; j < Panels.length && (!gotPanel); j++) {
+			for (k = 0; k < Panels[j].rows.length; k++) {
+				if(this.divNodeId === Panels[j].rows[k].id) {
+					curPanel = Panels[j];
+					moduleDiv = Panels[j].rows[k];
+					gotPanel = true;
+					break;
+				}
+			}
+		}
+
+		if (curPanel !== undefined && curPanel !== null && moduleDiv !== undefined && moduleDiv !== null) {
+			curPanel.removeRow(moduleDiv);
+		}
+
+		getSubmittingData(curPanel);
+
+		var portletDiv = document.getElementById(this.divNode.id);
+		var parentNode =  portletDiv.parentNode;
+		parentNode.removeChild(portletDiv);
+
+		if (vuit.exists('PageLayout')) {
+		   PageLayout.render();
+		}
+	},
+
+	submitForm: function(form,actionState) {
+		var elName;
+		var submitTracker;
+		var vapDynamic = new VignettePortal.DynamicAJAXClient();
+		var vgnButSub = "vgnDPIButSub" + actionState.targetUID;
+//		var extQuery = "input[name=" + vgnButSub + "]";
+		var extQuery = "input[id=" + vgnButSub + "]";
+		var elements = vuit.query(extQuery, form);
+		   if (elements !== undefined && elements.length > 0) {
+			   elName = elements[0].value ;
+			   submitTracker = elements[0];
+		   }
+		if (elName !== undefined && elName !== null && elName !== "") {
+			var inputElem = null ;
+			elements = vuit.query('input[type=submit]', form);
+			for (var i = 0 ; elements !== undefined && i < elements.length ; i++) {
+				if (elements[i].name === elName) {
+					inputElem = elements[i];
+					break;
+				}
+			}
+			if (inputElem === null) {
+				elements = vuit.query('input[type=image]', form);
+				for (var i = 0 ; elements !== undefined && i < elements.length ; i++) {
+					if (elements[i].name === elName) {
+						inputElem = elements[i];
+						break;
+					}
+				}
+			}
+			if (inputElem !== null) {
+				var sub = document.createElement("input");
+				sub.setAttribute("name", elName);
+				sub.setAttribute("value", elements[i].value);
+				sub.setAttribute("type", "hidden");
+				form.appendChild(sub);
+			}
+			form.removeChild(submitTracker);
+		}
+
+		// build an appropriate URL and put into the form action for submission.
+		// Must be in the form action as thats where the sendForm() call is going to look for it
+		var templateToUse = vapDynamic.getTemplateToUse(actionState.baseURL) ;
+		var url = vapDynamic.buildRenderURL(actionState, templateToUse);
+		form.action = url;
+		var currentPortlet = this;
+		var wasMaximized = false;
+		if (currentPortlet.state.targetState === 'maximized') {
+			wasMaximized = true ;
+		}
+
+		if (form.encoding === 'multipart/form-data') {
+			new VignettePortal.AJAXClient().sendMultiPartForm(form, function(responseText) {
+				if (actionState.urlType === 'action') {
+					currentPortlet.actionResponseHandler(responseText,false)
+				} else {
+					currentPortlet.renderResponseHandler(responseText,wasMaximized,true);
+				}
+			},"text/html");
+		} else {
+			new VignettePortal.AJAXClient().sendForm(form, function(resp) {
+				var responseText = resp.responseText;
+				if (actionState.urlType === 'action') {
+					currentPortlet.actionResponseHandler(responseText,false);
+				} else {
+					currentPortlet.renderResponseHandler(responseText,wasMaximized,true);
+				}
+			});
+		}
+	}
+};
+
+
+// Global Functions
+
+function updatePortletDivId(uid, newDivId) {
+	VignettePortal.DynamicAJAXClient.updatePortletDivId(uid, newDivId);
+}
+// This function will update all the divids of the portlets within a panel.
+function updatePortletDivIdsForAll(panel) {
+	VignettePortal.DynamicAJAXClient.updatePortletDivIdsForAll(panel);
+}
+
+/**
+ * This is the function that is called from within the rendered portlet URLs
+ * (i.e. <A HREF="javascript:portletURL(...)">)
+ * @param params state information
+ */
+function portletURL(params) {
+	return VignettePortal.DynamicAJAXClient.portletURL(params);
+}
+

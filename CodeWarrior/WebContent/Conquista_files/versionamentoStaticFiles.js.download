@@ -1,0 +1,36 @@
+var versaoDosStaticFiles = "70";
+
+function setVersaoDosStaticFiles(versao){
+	versaoDosStaticFiles = versao;
+}
+
+function importarJS(path, id){
+	var js = document.createElement("script"); 
+	if(path != undefined && path != ""){
+		if(path.indexOf("?") > -1){
+			js.src = path + "&versao=" + versaoDosStaticFiles; 
+		}else {
+			js.src = path + "?versao=" + versaoDosStaticFiles; 
+		}
+		
+		var fjs = document.getElementById(id);
+		fjs.parentNode.insertBefore(js, fjs);
+	}
+}
+
+function importarCSS(path, id){
+    var link  = document.createElement('link');
+    link.rel  = 'stylesheet';
+    link.type = 'text/css';
+	
+	if(path != undefined && path != ""){
+		if(path.indexOf("?") > -1){
+			link.href = path + "&versao=" + versaoDosStaticFiles;
+		}else {
+			link.href = path + "?versao=" + versaoDosStaticFiles;
+		}
+		
+		var fjs = document.getElementById(id);
+		fjs.parentNode.insertBefore(link, fjs);
+	}
+}
